@@ -4,11 +4,13 @@ import machine
 import network
 import socket
 
-ssid = 'Grace'
-password = ''
+# ssid = 'Grace'
+# password = ''
 
-ssid = 'Grace5276'
-password = ''
+# ssid = 'Grace5276'
+# password = ''
+ssid = 'SpectrumSetup-BB'
+password = 'MAGGIEMAE'
 
 def wifi_connect():
     wlan = network.WLAN(network.STA_IF)
@@ -71,13 +73,13 @@ def serve(connection):
         except IndexError:
             pass
 
-        if request == '/lighton?':
+        if request == '/lighton':
             pico_led.on()
             state = 'ON'
-        if request =='/lightoff?':
+        if request =='/lightoff':
             pico_led.off()
             state = 'OFF'
-        if request =='/flash?':
+        if request =='/flash':
             pico_led.on()
             sleep(1)
             pico_led.off()
@@ -92,8 +94,12 @@ def serve(connection):
             state = 'Flash'
         
         temperature = pico_temp_sensor.temp
+        # html = webpage(temperature, state)
+        # client.send(html)
+        # client.close()
+        response = f"HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n"
         html = webpage(temperature, state)
-        client.send(html)
+        client.send(response.encode() + html.encode())
         client.close()
         
 try:
