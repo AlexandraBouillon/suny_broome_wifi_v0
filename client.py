@@ -1,5 +1,8 @@
 import requests
 import time
+from flask import Flask, render_template_string, redirect, url_for
+
+app = Flask(__name__)
 
 class PicoWClient:
     def __init__(self, ip_address):
@@ -7,7 +10,6 @@ class PicoWClient:
         self.base_url = f"http://{ip_address}"
     
     def turn_light_on(self):
-        """Send request to turn the LED on"""
         try:
             response = requests.get(f"{self.base_url}/lighton")
             return response.status_code == 200
@@ -16,7 +18,6 @@ class PicoWClient:
             return False
 
     def turn_light_off(self):
-        """Send request to turn the LED off"""
         try:
             response = requests.get(f"{self.base_url}/lightoff")
             return response.status_code == 200
@@ -25,7 +26,6 @@ class PicoWClient:
             return False
 
     def flash_light(self):
-        """Send request to flash the LED"""
         try:
             response = requests.get(f"{self.base_url}/flash")
             return response.status_code == 200
@@ -34,7 +34,6 @@ class PicoWClient:
             return False
 
     def get_status(self):
-        """Get the current temperature and LED state"""
         try:
             response = requests.get(self.base_url)
             return response.text
@@ -42,53 +41,75 @@ class PicoWClient:
             print(f"Error getting status: {e}")
             return None
 
-def main():
-    pico_ip = input("Enter Pico W's IP address: ") # update with IP
-    client = PicoWClient(pico_ip)
+ 
+client = PicoWClient('192.168.1.137')  
 
-    while True:
-        print("\nPico W Control Menu:")
-        print("1. Turn LED On")
-        print("2. Turn LED Off")
-        print("3. Flash LED")
-        print("4. Get Status")
-        print("5. Exit")
+ 
+HTML_TEMPLATE = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pico W Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pico W Control Panel</h1>
+    
+    <a href="{{ url_for('light_on') }}" class="button">Turn Light On</a>
+    <a href="{{ url_for('light_off') }}" class="button">Turn Light Off</a>
+    <a href="{{ url_for('flash') }}" class="button">Flash Light</a>
+    
+    <div class="status">
+        <h2>Status:</h2>
+        <p>{{ status }}</p>
+    </div>
+    
+    <p><a href="{{ url_for('index') }}" class="button">Refresh Status</a></p>
+</body>
+</html>
+'''
 
-        choice = input("Enter your choice (1-5): ")
+@app.route('/')
+def index():
+    status = client.get_status()
+    return render_template_string(HTML_TEMPLATE, status=status)
 
-        if choice == '1':
-            if client.turn_light_on():
-                print("LED turned on successfully")
-            else:
-                print("Failed to turn LED on")
+@app.route('/light_on')
+def light_on():
+    client.turn_light_on()
+    return redirect(url_for('index'))
 
-        elif choice == '2':
-            if client.turn_light_off():
-                print("LED turned off successfully")
-            else:
-                print("Failed to turn LED off")
+@app.route('/light_off')
+def light_off():
+    client.turn_light_off()
+    return redirect(url_for('index'))
 
-        elif choice == '3':
-            if client.flash_light():
-                print("LED flashing initiated")
-            else:
-                print("Failed to initiate LED flashing")
+@app.route('/flash')
+def flash():
+    client.flash_light()
+    return redirect(url_for('index'))
 
-        elif choice == '4':
-            status = client.get_status()
-            if status:
-                print("Current status:", status)
-            else:
-                print("Failed to get status")
-
-        elif choice == '5':
-            print("Exiting...")
-            break
-
-        else:
-            print("Invalid choice. Please try again.")
-
-        time.sleep(1)
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run(debug=True)
