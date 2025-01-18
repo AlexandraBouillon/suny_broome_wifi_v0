@@ -4,27 +4,9 @@ import machine
 import network
 import socket
 
+# WiFi credentials
 ssid = 'SpectrumSetup-BB'
 password = 'MAGGIEMAE'
-
-def wifi_connect():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(ssid, password)
-    while wlan.isconnected() == False:
-        print('Waiting for connection...')
-        sleep(1)
-    id = wlan.ifconfig()[0]
-    print("Connected on ",id)
-    return id
-
-def open_socket(ip):
-    address = (ip, 80)
-    connection = socket.socket()
-    connection.bind(address)
-    connection.listen(1)
-    print("connection = ",connection)
-    return connection 
 
 def webpage(temperature, state):
     #Template HTML
@@ -32,15 +14,15 @@ def webpage(temperature, state):
             <!DOCTYPE html>
             <html>
             
-            <form action="/lighton">
+            <form action="lighton">
             <input type="submit" value="Light on" />
             </form>
 
-            <form action="/lightoff">
+            <form action="lightoff">
             <input type="submit" value="Light off" />
             </form>
 
-            <form action="/flash">
+            <form action="flash">
             <input type="submit" value="flash 3x" />
             </form>
             
@@ -52,6 +34,18 @@ def webpage(temperature, state):
             """
     return str(html)
 
+def wifi_connect():
+    #Connect to WLAN
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+    while wlan.isconnected() == False:
+        print('Waiting for connection...')
+        sleep(1)
+    ip = wlan.ifconfig()[0]
+    print(f'Connected on {ip}')
+    return ip
+
 def serve(connection):
     state = 'OFF'
     pico_led.off()
@@ -61,43 +55,52 @@ def serve(connection):
         request = client.recv(1024)
         request = str(request)
         
-##        print (request)
-        
         try:
             request = request.split()[1]
-        except IndexError:
-            pass
+            print(f"Request: {request}")  # Debug print
+            
+            # Prepare response header
+            response = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n"
+            
+            if 'lighton?' in request:
+                pico_led.on()
+                state = 'ON'
+                client.send(response.encode())
+            elif 'lightoff?' in request:
+                pico_led.off()
+                state = 'OFF'
+                client.send(response.encode())
+            elif 'flash?' in request:
+                pico_led.on()
+                sleep(1)
+                pico_led.off()
+                sleep(1)
+                pico_led.on()
+                sleep(1)
+                pico_led.off()
+                sleep(1)
+                pico_led.on()
+                sleep(1)
+                pico_led.off()
+                state = 'FLASHED'
+                client.send(response.encode())
+            else:
+                # Main page
+                temperature = pico_temp_sensor.temp
+                html = webpage(temperature, state)
+                client.send(response.encode() + html.encode())
+                
+        except Exception as e:
+            print(f"Error: {e}")
+        finally:
+            client.close()
 
-        if request == '/lighton?':
-            pico_led.on()
-            state = 'ON'
-        if request =='/lightoff?':
-            pico_led.off()
-            state = 'OFF'
-        if request =='/flash?':
-            pico_led.on()
-            sleep(1)
-            pico_led.off()
-            sleep(1)
-            pico_led.on()
-            sleep(1)
-            pico_led.off()
-            sleep(1)
-            pico_led.on()
-            sleep(1)
-            pico_led.off()
-            state = 'Flash'
-        
-        temperature = pico_temp_sensor.temp
-        html = webpage(temperature, state)
-        client.send(html)
-        client.close()
-        
 try:
-    wifi_id = wifi_connect()
-    print("Connected on ",wifi_id)
-    wifi_connection = open_socket(wifi_id)
-    serve(wifi_connection)
-    
+    ip = wifi_connect()
+    connection = socket.socket()
+    connection.bind((ip, 80))
+    connection.listen(1)
+    print(f"Listening on {ip}")
+    serve(connection)
 except KeyboardInterrupt:
     machine.reset()
