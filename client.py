@@ -7,7 +7,7 @@ app = Flask(__name__)
 class PicoWClient:
     def __init__(self):
         """Initialize the client with the Pico W's IP address"""
-        self.base_url = "https://df9e-2603-7081-5500-76ad-29f9-2637-ebbe-1e18.ngrok-free.app"
+        self.base_url = "https://xxxx-xxx.ngrok-free.app" 
     
     def test_connection(self):
         """Test the connection to Pico W"""
