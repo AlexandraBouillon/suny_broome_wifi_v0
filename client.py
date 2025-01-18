@@ -93,6 +93,8 @@ HTML_TEMPLATE = '''
             color: white;
             text-decoration: none;
             border-radius: 5px;
+            border: none;
+            cursor: pointer;
         }
         .status {
             margin-top: 20px;
@@ -103,6 +105,9 @@ HTML_TEMPLATE = '''
         .error {
             color: red;
             font-weight: bold;
+        }
+        form {
+            display: inline-block;
         }
     </style>
 </head>
@@ -117,9 +122,15 @@ HTML_TEMPLATE = '''
     </div>
 
     {% if connection_ok %}
-        <a href="{{ url_for('light_on') }}" class="button">Turn Light On</a>
-        <a href="{{ url_for('light_off') }}" class="button">Turn Light Off</a>
-        <a href="{{ url_for('flash') }}" class="button">Flash Light</a>
+        <form action="{{ url_for('light_on') }}?">
+            <input type="submit" value="Turn Light On" class="button"/>
+        </form>
+        <form action="{{ url_for('light_off') }}?">
+            <input type="submit" value="Turn Light Off" class="button"/>
+        </form>
+        <form action="{{ url_for('flash') }}?">
+            <input type="submit" value="Flash Light" class="button"/>
+        </form>
         
         <div class="status">
             <h2>Pico Status:</h2>
