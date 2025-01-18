@@ -73,13 +73,13 @@ def serve(connection):
         except IndexError:
             pass
 
-        if request == '/lighton':
+        if request == 'lighton':
             pico_led.on()
             state = 'ON'
-        if request =='/lightoff':
+        if request =='lightoff':
             pico_led.off()
             state = 'OFF'
-        if request =='/flash':
+        if request =='flash':
             pico_led.on()
             sleep(1)
             pico_led.off()
