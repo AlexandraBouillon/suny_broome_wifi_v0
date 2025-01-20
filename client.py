@@ -2,11 +2,12 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 import requests
 import logging
 import sys
+from datetime import datetime
 from config import NGROK_URL
 import urllib3
 import re
 
-# Configure logging to write to a file
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 # Disable SSL warnings
 urllib3.disable_warnings()
 
-# Initialize Flask with static folder
+# Initialize Flask app
 app = Flask(__name__, static_folder='static')
 
 @app.route('/')
@@ -28,7 +29,7 @@ def home():
     status = "Unknown"
     temperature = "Unknown"
     try:
-        # Get full response which includes both status and temperature
+        # Get status and temperature from Pico
         response = requests.get(f"{NGROK_URL}/", verify=False, timeout=5)
         html_text = response.text
         
@@ -38,11 +39,11 @@ def home():
         elif "LED is OFF" in html_text:
             status = "OFF ⭕"
             
-        # Parse temperature with better formatting
+        # Parse temperature with formatting
         temp_match = re.search(r'Temperature is ([\d.]+)', html_text)
         if temp_match:
             temp = float(temp_match.group(1))
-            temperature = f"{temp:.2f}"  # Format to 2 decimal places
+            temperature = f"{temp:.2f}"
             logger.info(f"Found temperature: {temperature}")
         else:
             logger.error(f"Temperature not found in response: {html_text}")
@@ -52,7 +53,11 @@ def home():
         logger.error(f"Error checking status/temperature: {str(e)}")
         status = "Error ⚠️"
         temperature = "Error ⚠️"
-    return render_template('index.html', status=status, temperature=temperature)
+    
+    return render_template('index.html', 
+                         status=status, 
+                         temperature=temperature,
+                         now=datetime.now())
 
 @app.route('/light_on')
 def light_on():
@@ -68,7 +73,7 @@ def light_on():
                 'Accept': '*/*'
             }
         )
-        logger.info(f"Full response: Status={response.status_code}, Text='{response.text}'")
+        logger.info(f"Light on response: Status={response.status_code}, Text='{response.text}'")
         return home()
     except requests.exceptions.Timeout:
         logger.error("Request timed out while connecting to Pico")
@@ -94,7 +99,7 @@ def light_off():
                 'Accept': '*/*'
             }
         )
-        logger.info(f"Full response: Status={response.status_code}, Text='{response.text}'")
+        logger.info(f"Light off response: Status={response.status_code}, Text='{response.text}'")
         return home()
     except requests.exceptions.Timeout:
         logger.error("Request timed out while connecting to Pico")
@@ -132,7 +137,7 @@ def flash():
         logger.error(f"Unexpected error in flash: {str(e)}")
         return f"Error: {str(e)}", 500
 
-# Add route for serving static files (if needed)
+# Static file routes
 @app.route('/static/<path:path>')
 def send_static(path):
     return send_from_directory('static', path)

@@ -1,13 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>LED Control Panel</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SUNY Broome LED Control Panel for Raspberry Pi Pico W">
+    <meta name="author" content="SUNY Broome">
+    
+    <title>LED Control Panel | SUNY Broome Engineering</title>
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="icon" type="image/webp" href="{{ url_for('static', filename='images/cropped-B-Lettermark-Gold-32x32.webp') }}">
+    <link rel="apple-touch-icon" sizes="32x32" href="{{ url_for('static', filename='images/favicon.png') }}">
+    
+    <!-- Adobe Fonts -->
+    <link rel="stylesheet" href="https://use.typekit.net/[your-kit-code].css">
+    
+    <!-- Fallback Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <header class="site-header">
+        <div class="header-content">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" 
+                 alt="SUNY Broome Logo" 
+                 class="logo"
+                 width="300"
+                 height="55">
+            <div class="department">Engineering</div>
+        </div>
+    </header>
+
     <div class="container">
         <h1>LED Control Panel</h1>
+        
         <div class="status-container">
             <div class="status">
                 LED Status: {{ status }}
@@ -16,11 +47,16 @@
                 Temperature: {{ temperature }}°C
             </div>
         </div>
+        
         <div class="controls">
             <a href="{{ url_for('light_on') }}" class="button on">Light On 💡</a>
             <a href="{{ url_for('light_off') }}" class="button off">Light Off ⭕</a>
             <a href="{{ url_for('flash') }}" class="button flash">Flash ⚡</a>
         </div>
     </div>
+
+    <footer class="footer">
+        <p>&copy; {{ now.year }} SUNY Broome. All rights reserved.</p>
+    </footer>
 </body>
 </html>
