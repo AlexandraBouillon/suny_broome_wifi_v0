@@ -1,43 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>LED Control</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        .button {
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 10px;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .status {
-            margin: 20px;
-            font-size: 18px;
-        }
-        .temperature {
-            margin: 20px;
-            font-size: 18px;
-            color: #666;
-        }
-    </style>
+    <title>LED Control Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>LED Control</h1>
-    <div class="status">
-        LED Status: {{ status }}
+    <div class="container">
+        <h1>LED Control Panel</h1>
+        <div class="status-container">
+            <div class="status">
+                LED Status: {{ status }}
+            </div>
+            <div class="temperature">
+                Temperature: {{ temperature }}°C
+            </div>
+        </div>
+        <div class="controls">
+            <a href="{{ url_for('light_on') }}" class="button on">Light On 💡</a>
+            <a href="{{ url_for('light_off') }}" class="button off">Light Off ⭕</a>
+            <a href="{{ url_for('flash') }}" class="button flash">Flash ⚡</a>
+        </div>
     </div>
-    <div class="temperature">
-        Temperature: {{ temperature }}°C
-    </div>
-    <a href="{{ url_for('light_on') }}" class="button">Light On</a>
-    <a href="{{ url_for('light_off') }}" class="button">Light Off</a>
-    <a href="{{ url_for('flash') }}" class="button">Flash</a>
 </body>
 </html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 import requests
 import logging
 import sys
@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 # Disable SSL warnings
 urllib3.disable_warnings()
 
-app = Flask(__name__)
+# Initialize Flask with static folder
+app = Flask(__name__, static_folder='static')
 
 @app.route('/')
 def home():
@@ -31,16 +32,17 @@ def home():
         response = requests.get(f"{NGROK_URL}/", verify=False, timeout=5)
         html_text = response.text
         
-        # Parse LED status
+        # Parse LED status with icon
         if "LED is ON" in html_text:
-            status = "ON"
+            status = "ON 💡"
         elif "LED is OFF" in html_text:
-            status = "OFF"
+            status = "OFF ⭕"
             
-        # Parse temperature with better regex
+        # Parse temperature with better formatting
         temp_match = re.search(r'Temperature is ([\d.]+)', html_text)
         if temp_match:
-            temperature = temp_match.group(1)
+            temp = float(temp_match.group(1))
+            temperature = f"{temp:.2f}"  # Format to 2 decimal places
             logger.info(f"Found temperature: {temperature}")
         else:
             logger.error(f"Temperature not found in response: {html_text}")
@@ -48,8 +50,8 @@ def home():
         logger.info(f"Status: {status}, Temperature: {temperature}")
     except Exception as e:
         logger.error(f"Error checking status/temperature: {str(e)}")
-        status = "Error"
-        temperature = "Error"
+        status = "Error ⚠️"
+        temperature = "Error ⚠️"
     return render_template('index.html', status=status, temperature=temperature)
 
 @app.route('/light_on')
@@ -129,6 +131,11 @@ def flash():
     except Exception as e:
         logger.error(f"Unexpected error in flash: {str(e)}")
         return f"Error: {str(e)}", 500
+
+# Add route for serving static files (if needed)
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory('static', path)
 
 if __name__ == '__main__':
     app.run(debug=True)
