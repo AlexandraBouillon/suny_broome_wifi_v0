@@ -1,53 +1,134 @@
-from flask import Flask, redirect, url_for, render_template
+from flask import Flask, render_template, request, redirect, url_for
 import requests
-import json
+import logging
+import sys
+from config import NGROK_URL
+import urllib3
+import re
 
-# Initialize Flask app
+# Configure logging to write to a file
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('/home/SUNYBROOMEPROJECT/suny_broome_wifi_v0/debug.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Disable SSL warnings
+urllib3.disable_warnings()
+
 app = Flask(__name__)
-
-# ESP32 URL (update with your ESP32's IP address)
-ESP32_URL = "http://192.168.1.184"  # Update this with your ESP32's IP
-
-def send_request(endpoint):
-    """Helper function to send requests to ESP32"""
-    try:
-        response = requests.get(f"{ESP32_URL}/{endpoint}")
-        return response.status_code == 200
-    except:
-        return False
 
 @app.route('/')
 def home():
-    """Home page route"""
+    status = "Unknown"
+    temperature = "Unknown"
     try:
-        # Try to get status from ESP32
-        response = requests.get(f"{ESP32_URL}/status")
-        if response.status_code == 200:
-            status = response.json()
+        # Get full response which includes both status and temperature
+        response = requests.get(f"{NGROK_URL}/", verify=False, timeout=5)
+        html_text = response.text
+        
+        # Parse LED status
+        if "LED is ON" in html_text:
+            status = "ON"
+        elif "LED is OFF" in html_text:
+            status = "OFF"
+            
+        # Parse temperature with better regex
+        temp_match = re.search(r'Temperature is ([\d.]+)', html_text)
+        if temp_match:
+            temperature = temp_match.group(1)
+            logger.info(f"Found temperature: {temperature}")
         else:
-            status = {"led": "unknown", "message": "Error connecting to ESP32"}
-    except:
-        status = {"led": "unknown", "message": "Error connecting to ESP32"}
-    
-    return render_template('index.html', status=status)
+            logger.error(f"Temperature not found in response: {html_text}")
+            
+        logger.info(f"Status: {status}, Temperature: {temperature}")
+    except Exception as e:
+        logger.error(f"Error checking status/temperature: {str(e)}")
+        status = "Error"
+        temperature = "Error"
+    return render_template('index.html', status=status, temperature=temperature)
 
 @app.route('/light_on')
 def light_on():
-    """Turn light on route"""
-    send_request('on')
-    return redirect(url_for('home'))
+    try:
+        full_url = f"{NGROK_URL}/lighton?"
+        logger.info(f"Attempting to connect to: {full_url}")
+        response = requests.get(
+            full_url,
+            verify=False, 
+            timeout=10,
+            headers={
+                'User-Agent': 'PythonAnywhere-Client',
+                'Accept': '*/*'
+            }
+        )
+        logger.info(f"Full response: Status={response.status_code}, Text='{response.text}'")
+        return home()
+    except requests.exceptions.Timeout:
+        logger.error("Request timed out while connecting to Pico")
+        return "Connection timed out", 504
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Connection error: {str(e)}")
+        return "Failed to connect to Pico", 502
+    except Exception as e:
+        logger.error(f"Unexpected error in light_on: {str(e)}")
+        return f"Error: {str(e)}", 500
 
 @app.route('/light_off')
 def light_off():
-    """Turn light off route"""
-    send_request('off')
-    return redirect(url_for('home'))
+    try:
+        full_url = f"{NGROK_URL}/lightoff?"
+        logger.info(f"Attempting to connect to: {full_url}")
+        response = requests.get(
+            full_url,
+            verify=False, 
+            timeout=10,
+            headers={
+                'User-Agent': 'PythonAnywhere-Client',
+                'Accept': '*/*'
+            }
+        )
+        logger.info(f"Full response: Status={response.status_code}, Text='{response.text}'")
+        return home()
+    except requests.exceptions.Timeout:
+        logger.error("Request timed out while connecting to Pico")
+        return "Connection timed out", 504
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Connection error: {str(e)}")
+        return "Failed to connect to Pico", 502
+    except Exception as e:
+        logger.error(f"Unexpected error in light_off: {str(e)}")
+        return f"Error: {str(e)}", 500
 
 @app.route('/flash')
 def flash():
-    """Flash light route"""
-    send_request('flash')
-    return redirect(url_for('home'))
+    try:
+        full_url = f"{NGROK_URL}/flash?"
+        logger.info(f"Attempting to connect to: {full_url}")
+        response = requests.get(
+            full_url,
+            verify=False, 
+            timeout=10,
+            headers={
+                'User-Agent': 'PythonAnywhere-Client',
+                'Accept': '*/*'
+            }
+        )
+        logger.info(f"Flash response: Status={response.status_code}, Text='{response.text}'")
+        return home()
+    except requests.exceptions.Timeout:
+        logger.error("Request timed out while connecting to Pico")
+        return "Connection timed out", 504
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Connection error: {str(e)}")
+        return "Failed to connect to Pico", 502
+    except Exception as e:
+        logger.error(f"Unexpected error in flash: {str(e)}")
+        return f"Error: {str(e)}", 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)

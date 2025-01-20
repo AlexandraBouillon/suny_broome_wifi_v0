@@ -1,106 +1,108 @@
-from picozero import pico_temp_sensor, pico_led
-from time import sleep
-import machine
+from flask import Flask, jsonify
+from machine import Pin
+import time
+import gc
 import network
-import socket
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Set up LED
+led = Pin(2, Pin.OUT)
 
 # WiFi credentials
-ssid = 'SpectrumSetup-BB'
-password = 'MAGGIEMAE'
+WIFI_SSID = "SpectrumSetup-BB"
+WIFI_PASSWORD = "MAGGIEMAE"
 
-def webpage(temperature, state):
-    #Template HTML
-    html = f"""
-            <!DOCTYPE html>
-            <html>
-            
-            <form action="lighton">
-            <input type="submit" value="Light on" />
-            </form>
-
-            <form action="lightoff">
-            <input type="submit" value="Light off" />
-            </form>
-
-            <form action="flash">
-            <input type="submit" value="flash 3x" />
-            </form>
-            
-            <p>LED is {state}</p>
-            <p>Temperature is {temperature}</p>
-            
-            </body>
-            </html>
-            """
-    return str(html)
-
-def wifi_connect():
-    #Connect to WLAN
+def connect_wifi():
+    """Connect to WiFi"""
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect(ssid, password)
-    while wlan.isconnected() == False:
-        print('Waiting for connection...')
-        sleep(1)
-    ip = wlan.ifconfig()[0]
-    print(f'Connected on {ip}')
-    return ip
+    if not wlan.isconnected():
+        print('Connecting to WiFi...')
+        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+        while not wlan.isconnected():
+            pass
+    print('Network config:', wlan.ifconfig())
 
-def serve(connection):
-    state = 'OFF'
-    pico_led.off()
-    temperature = 0
-    while True:
-        client = connection.accept()[0]
-        request = client.recv(1024)
-        request = str(request)
+@app.route('/')
+def home():
+    """Home route"""
+    gc.collect()  # Run garbage collection
+    return jsonify({
+        "message": "ESP32 LED Control Server",
+        "status": "running"
+    })
+
+@app.route('/on')
+def on():
+    """Turn LED on"""
+    try:
+        led.value(1)
+        return jsonify({
+            "led": "on",
+            "message": "LED turned on"
+        })
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "message": "Failed to turn LED on"
+        }), 500
+
+@app.route('/off')
+def off():
+    """Turn LED off"""
+    try:
+        led.value(0)
+        return jsonify({
+            "led": "off",
+            "message": "LED turned off"
+        })
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "message": "Failed to turn LED off"
+        }), 500
+
+@app.route('/flash')
+def flash():
+    """Flash LED once"""
+    try:
+        led.value(1)
+        time.sleep(0.5)
+        led.value(0)
+        return jsonify({
+            "led": "flashed",
+            "message": "LED flashed"
+        })
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "message": "Failed to flash LED"
+        }), 500
+
+@app.route('/status')
+def status():
+    """Get LED status"""
+    try:
+        current_state = led.value()
+        return jsonify({
+            "led": "on" if current_state else "off",
+            "message": "LED is " + ("on" if current_state else "off")
+        })
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "message": "Failed to get LED status"
+        }), 500
+
+if __name__ == '__main__':
+    try:
+        # Connect to WiFi
+        connect_wifi()
         
-        try:
-            request = request.split()[1]
-            print(f"Request: {request}")  # Debug print
-            
-            # Prepare response header
-            response = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n"
-            
-            if 'lighton?' in request:
-                pico_led.on()
-                state = 'ON'
-                client.send(response.encode())
-            elif 'lightoff?' in request:
-                pico_led.off()
-                state = 'OFF'
-                client.send(response.encode())
-            elif 'flash?' in request:
-                pico_led.on()
-                sleep(1)
-                pico_led.off()
-                sleep(1)
-                pico_led.on()
-                sleep(1)
-                pico_led.off()
-                sleep(1)
-                pico_led.on()
-                sleep(1)
-                pico_led.off()
-                state = 'FLASHED'
-                client.send(response.encode())
-            else:
-                # Main page
-                temperature = pico_temp_sensor.temp
-                html = webpage(temperature, state)
-                client.send(response.encode() + html.encode())
-                
-        except Exception as e:
-            print(f"Error: {e}")
-        finally:
-            client.close()
-
-try:
-    ip = wifi_connect()
-    connection = socket.socket()
-    connection.bind((ip, 80))
-    connection.listen(1)
-    print(f"Listening on {ip}")
-    serve(connection)
-except KeyboardInterrupt:
-    machine.reset()
+        # Start server
+        print('Starting server...')
+        app.run(host='0.0.0.0', port=80)
+    except Exception as e:
+        print('Failed to start server:', str(e))
