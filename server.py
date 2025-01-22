@@ -1,108 +1,103 @@
-from flask import Flask, jsonify
-from machine import Pin
-import time
-import gc
 import network
+import socket
+import time
+import machine
+from config import Secrets  # Simplified import for same directory
+from microdot import Microdot, send_file
+import json
+from datetime import datetime
+from handlers.perplexity_handler import PerplexityAPI  # Updated import path
 
-# Initialize Flask app
-app = Flask(__name__)
+# Load credentials from secrets
+WIFI_SSID = Secrets.WIFI_SSID
+WIFI_PASSWORD = Secrets.WIFI_PASSWORD
 
-# Set up LED
-led = Pin(2, Pin.OUT)
+# Initialize LED and temperature sensor
+led = machine.Pin("LED", machine.Pin.OUT)
+sensor_temp = machine.ADC(4)
 
-# WiFi credentials
-WIFI_SSID = "SpectrumSetup-BB"
-WIFI_PASSWORD = "MAGGIEMAE"
+# Initialize web server
+app = Microdot()
+led_status = "OFF"
 
-def connect_wifi():
-    """Connect to WiFi"""
+def connect_to_network():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
+    
     if not wlan.isconnected():
-        print('Connecting to WiFi...')
+        print('Connecting to network...')
         wlan.connect(WIFI_SSID, WIFI_PASSWORD)
-        while not wlan.isconnected():
-            pass
-    print('Network config:', wlan.ifconfig())
+        
+        # Wait for connection with timeout
+        max_wait = 10
+        while max_wait > 0 and not wlan.isconnected():
+            max_wait -= 1
+            print('Waiting for connection...')
+            time.sleep(1)
+            
+    if wlan.isconnected():
+        print('Connected! Network config:', wlan.ifconfig())
+        return True
+    print('Connection failed!')
+    return False
 
 @app.route('/')
-def home():
-    """Home route"""
-    gc.collect()  # Run garbage collection
-    return jsonify({
-        "message": "ESP32 LED Control Server",
-        "status": "running"
-    })
+def index(request):
+    return send_file('templates/index.html', 
+                    status_code=200, 
+                    content_type='text/html')
 
-@app.route('/on')
-def on():
-    """Turn LED on"""
-    try:
-        led.value(1)
-        return jsonify({
-            "led": "on",
-            "message": "LED turned on"
-        })
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "message": "Failed to turn LED on"
-        }), 500
+@app.route('/static/<path:path>')
+def static(request, path):
+    if '..' in path:
+        return 'Not found', 404
+    return send_file(f'static/{path}')
 
-@app.route('/off')
-def off():
-    """Turn LED off"""
-    try:
-        led.value(0)
-        return jsonify({
-            "led": "off",
-            "message": "LED turned off"
-        })
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "message": "Failed to turn LED off"
-        }), 500
+@app.route('/light_on')
+def light_on(request):
+    global led_status
+    led.on()
+    led_status = "ON"
+    return {'status': led_status}
+
+@app.route('/light_off')
+def light_off(request):
+    global led_status
+    led.off()
+    led_status = "OFF"
+    return {'status': led_status}
 
 @app.route('/flash')
-def flash():
-    """Flash LED once"""
-    try:
-        led.value(1)
-        time.sleep(0.5)
-        led.value(0)
-        return jsonify({
-            "led": "flashed",
-            "message": "LED flashed"
-        })
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "message": "Failed to flash LED"
-        }), 500
+def flash(request):
+    global led_status
+    led.toggle()
+    time.sleep(0.5)
+    led.toggle()
+    led_status = "OFF" if led.value() == 0 else "ON"
+    return {'status': led_status}
 
 @app.route('/status')
-def status():
-    """Get LED status"""
+def status(request):
+    # Read temperature
+    reading = sensor_temp.read_u16() * 3.3 / (65535)
+    temperature = 27 - (reading - 0.706)/0.001721
+    
+    return {
+        'led_status': led_status,
+        'temperature': f"{temperature:.1f}"
+    }
+
+def start_server():
     try:
-        current_state = led.value()
-        return jsonify({
-            "led": "on" if current_state else "off",
-            "message": "LED is " + ("on" if current_state else "off")
-        })
+        if connect_to_network():
+            print("Starting web server...")
+            app.run(port=80)
+    except KeyboardInterrupt:
+        print("Server stopped by user")
+        machine.reset()
     except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "message": "Failed to get LED status"
-        }), 500
+        print(f"Error: {e}")
+        machine.reset()
 
 if __name__ == '__main__':
-    try:
-        # Connect to WiFi
-        connect_wifi()
-        
-        # Start server
-        print('Starting server...')
-        app.run(host='0.0.0.0', port=80)
-    except Exception as e:
-        print('Failed to start server:', str(e))
+    start_server()

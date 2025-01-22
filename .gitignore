@@ -18,3 +18,9 @@ venv/
 .vscode/
 .idea/
 *.swp
+# .gitignore
+config/secrets.py
+*.key
+*.pem
+__pycache__/
+config/secrets.py

@@ -1,0 +1,21 @@
+<!-- <div class="ai-chat"></div>
+    <input type="text" id="question-input" placeholder="Ask a question...">
+    <button onclick="askQuestion()">Ask</button>
+    <div id="response-area"></div>
+</div>
+
+<script>
+async function askQuestion() {
+    const question = document.getElementById('question-input').value;
+    const response = await fetch('/ask', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ question })
+    });
+    const data = await response.json();
+    document.getElementById('response-area').innerText = 
+        data.choices?.[0]?.message?.content || 'Error getting response';
+}
+</script> -->
