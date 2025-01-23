@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
 import requests
 import logging
 import sys
 from datetime import datetime
-from config import NGROK_URL
+from config import NGROK_URL, Secrets, get_ai_response
 import urllib3
 import re
 
@@ -136,6 +136,47 @@ def flash():
     except Exception as e:
         logger.error(f"Unexpected error in flash: {str(e)}")
         return f"Error: {str(e)}", 500
+
+# New chat endpoint
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    try:
+        data = request.json
+        user_input = data.get('text', '')
+        logger.info(f"Chat request received: {user_input}")
+
+        # Get current status for context
+        status = "Unknown"
+        temperature = "Unknown"
+        try:
+            response = requests.get(f"{NGROK_URL}/", verify=False, timeout=5)
+            html_text = response.text
+            if "LED is ON" in html_text:
+                status = "ON"
+            elif "LED is OFF" in html_text:
+                status = "OFF"
+            temp_match = re.search(r'Temperature is ([\d.]+)', html_text)
+            if temp_match:
+                temperature = temp_match.group(1)
+        except Exception as e:
+            logger.error(f"Error getting status for chat context: {str(e)}")
+
+        context = f"LED is currently {status}. Temperature is {temperature}°C."
+        
+        response = get_ai_response(user_input, context)
+        logger.info(f"Chat response generated: {response}")
+        
+        return jsonify({
+            "reply": response,
+            "status": "success"
+        })
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        return jsonify({
+            "reply": "Sorry, I encountered an error processing your request.",
+            "status": "error",
+            "error": str(e)
+        }), 500
 
 # Static file routes
 @app.route('/static/<path:path>')

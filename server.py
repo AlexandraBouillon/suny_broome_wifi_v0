@@ -1,103 +1,167 @@
-import network
-import socket
-import time
-import machine
-from config import Secrets  # Simplified import for same directory
-from microdot import Microdot, send_file
-import json
+from flask import Flask, render_template, jsonify, request, redirect, url_for
 from datetime import datetime
-from handlers.perplexity_handler import PerplexityAPI  # Updated import path
+import machine
+import time
+from config import get_ai_response, save_conversation
+import logging
 
-# Load credentials from secrets
-WIFI_SSID = Secrets.WIFI_SSID
-WIFI_PASSWORD = Secrets.WIFI_PASSWORD
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('debug.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
-# Initialize LED and temperature sensor
-led = machine.Pin("LED", machine.Pin.OUT)
-sensor_temp = machine.ADC(4)
+app = Flask(__name__)
 
-# Initialize web server
-app = Microdot()
-led_status = "OFF"
+# Setup LED and temperature sensor
+try:
+    led = machine.Pin("LED", machine.Pin.OUT)
+    sensor_temp = machine.ADC(4)
+    conversion_factor = 3.3 / (65535)
+    logger.info("Hardware initialized successfully")
+except Exception as e:
+    logger.error(f"Error initializing hardware: {e}")
+    # Create dummy objects for testing
+    class DummyPin:
+        def __init__(self):
+            self._value = 0
+        def value(self, val=None):
+            if val is not None:
+                self._value = val
+            return self._value
+    led = DummyPin()
+    logger.info("Using dummy hardware for testing")
 
-def connect_to_network():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    
-    if not wlan.isconnected():
-        print('Connecting to network...')
-        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
-        
-        # Wait for connection with timeout
-        max_wait = 10
-        while max_wait > 0 and not wlan.isconnected():
-            max_wait -= 1
-            print('Waiting for connection...')
-            time.sleep(1)
-            
-    if wlan.isconnected():
-        print('Connected! Network config:', wlan.ifconfig())
-        return True
-    print('Connection failed!')
-    return False
+def read_temperature():
+    """Read temperature from the Pico's internal temperature sensor"""
+    try:
+        reading = sensor_temp.read_u16() * conversion_factor
+        temperature = 27 - (reading - 0.706) / 0.001721
+        return round(temperature, 1)
+    except Exception as e:
+        logger.error(f"Error reading temperature: {e}")
+        return 25.0  # Return dummy value for testing
+
+def flash_led():
+    """Flash the LED 5 times"""
+    try:
+        for _ in range(5):
+            led.value(1)
+            time.sleep(0.5)
+            led.value(0)
+            time.sleep(0.5)
+        logger.info("LED flashed successfully")
+    except Exception as e:
+        logger.error(f"Error flashing LED: {e}")
 
 @app.route('/')
-def index(request):
-    return send_file('templates/index.html', 
-                    status_code=200, 
-                    content_type='text/html')
-
-@app.route('/static/<path:path>')
-def static(request, path):
-    if '..' in path:
-        return 'Not found', 404
-    return send_file(f'static/{path}')
+def index():
+    """Render the main page with current LED and temperature status"""
+    try:
+        temperature = read_temperature()
+        status = "ON" if led.value() else "OFF"
+        return render_template('index.html', 
+                             temperature=temperature, 
+                             status=status,
+                             now=datetime.now())
+    except Exception as e:
+        logger.error(f"Error rendering index: {e}")
+        return "Error loading page", 500
 
 @app.route('/light_on')
-def light_on(request):
-    global led_status
-    led.on()
-    led_status = "ON"
-    return {'status': led_status}
+def light_on():
+    """Turn the LED on"""
+    try:
+        led.value(1)
+        logger.info("LED turned ON")
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error turning LED on: {e}")
+        return "Error controlling LED", 500
 
 @app.route('/light_off')
-def light_off(request):
-    global led_status
-    led.off()
-    led_status = "OFF"
-    return {'status': led_status}
+def light_off():
+    """Turn the LED off"""
+    try:
+        led.value(0)
+        logger.info("LED turned OFF")
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error turning LED off: {e}")
+        return "Error controlling LED", 500
 
 @app.route('/flash')
-def flash(request):
-    global led_status
-    led.toggle()
-    time.sleep(0.5)
-    led.toggle()
-    led_status = "OFF" if led.value() == 0 else "ON"
-    return {'status': led_status}
-
-@app.route('/status')
-def status(request):
-    # Read temperature
-    reading = sensor_temp.read_u16() * 3.3 / (65535)
-    temperature = 27 - (reading - 0.706)/0.001721
-    
-    return {
-        'led_status': led_status,
-        'temperature': f"{temperature:.1f}"
-    }
-
-def start_server():
+def flash():
+    """Flash the LED"""
     try:
-        if connect_to_network():
-            print("Starting web server...")
-            app.run(port=80)
-    except KeyboardInterrupt:
-        print("Server stopped by user")
-        machine.reset()
+        flash_led()
+        logger.info("LED flash sequence completed")
+        return redirect(url_for('index'))
     except Exception as e:
-        print(f"Error: {e}")
-        machine.reset()
+        logger.error(f"Error in flash sequence: {e}")
+        return "Error flashing LED", 500
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """
+    Handle chat API requests
+    Returns JSON response with AI assistant's reply
+    """
+    try:
+        # Get the user's message
+        user_input = request.json.get('text', '')
+        if not user_input:
+            return jsonify({
+                'status': 'error',
+                'reply': 'Please provide a message'
+            }), 400
+        
+        # Get current LED and temperature status for context
+        led_status = "ON" if led.value() else "OFF"
+        temperature = read_temperature()
+        context = f"LED is currently {led_status}. Temperature is {temperature}°C."
+        
+        # Get AI response
+        ai_response = get_ai_response(user_input, context)
+        
+        # Save the conversation
+        save_conversation(user_input, ai_response)
+        
+        logger.info(f"Chat request processed successfully for input: {user_input[:50]}...")
+        return jsonify({
+            'status': 'success',
+            'reply': ai_response
+        })
+        
+    except Exception as e:
+        logger.error(f"Chat API error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'reply': 'Sorry, I encountered an error. Please try again.'
+        }), 500
+
+@app.route('/api/status')
+def get_status():
+    """
+    API endpoint to get current LED and temperature status
+    """
+    try:
+        return jsonify({
+            'status': 'success',
+            'led_status': "ON" if led.value() else "OFF",
+            'temperature': read_temperature()
+        })
+    except Exception as e:
+        logger.error(f"Status API error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Error getting status'
+        }), 500
 
 if __name__ == '__main__':
-    start_server()
+    app.run(debug=True, host='0.0.0.0', port=80)
