@@ -7,8 +7,17 @@
     <title>SUNY Broome LED Control Panel</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://pixijs.download/v8.0.0/pixi.min.js"></script>
 </head>
 <body>
+    <div id="strobeWarning" class="modal">
+        <div class="modal-content">
+            <h2>⚠️ Photosensitivity Warning</h2>
+            <p>This page contains strobe effects that may trigger seizures in people with photosensitive epilepsy.</p>
+            <button onclick="acknowledgeWarning()">I understand, continue</button>
+        </div>
+    </div>
+
     <header class="site-header">
         <div class="header-content">
             <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="SUNY Broome Logo" class="logo">
@@ -16,33 +25,41 @@
         </div>
     </header>
 
+    <div id="pixiContainer" class="background-container"></div>
+
     <div class="main-content">
         <div class="container">
             <h1>LED Control Panel</h1>
             <div class="status-container">
-                <div class="status">
-                    LED Status: {{ status }}
+                <div class="status-item">
+                    <div class="status">LED Status: {{ status }}</div>
                 </div>
-                <div class="temperature">
-                    Temperature: {{ temperature }}°C
+                <div class="status-item">
+                    <div class="temperature">Temperature: {{ temperature }}°C</div>
                 </div>
             </div>
-            <div class="controls">
-                <a href="/light_on" class="button on">Turn On</a>
-                <a href="/light_off" class="button off">Turn Off</a>
-                <a href="/flash" class="button flash">Flash</a>
+            <div class="button-container">
+                <div class="button-group">
+                    <a href="/light_on" class="button on">Turn On</a>
+                    <a href="/light_off" class="button off">Turn Off</a>
+                    <a href="#" class="button flash" onclick="handleFlash()">Flash</a>
+                </div>
             </div>
         </div>
 
         <div class="chat-panel">
             <div class="chat-title">
                 <img src="{{ url_for('static', filename='images/tjwatson-avatar.png') }}" alt="TJ Avatar">
-                <h2>TJ AI Assistant</h2>
+                <h2>AI Assistant, TJ</h2>
             </div>
             <div class="chat-container" id="chatContainer"></div>
             <div class="chat-input-container">
-                <input type="text" id="userInput" class="chat-input" placeholder="Ask TJ about the LED system...">
-                <button onclick="sendMessage()" class="send-button">Chat with TJ</button>
+                <div class="input-wrapper">
+                    <input type="text" id="userInput" class="chat-input" placeholder="Ask TJ about the LED system...">
+                </div>
+                <div class="button-wrapper">
+                    <button onclick="sendMessage()" class="send-button button chat">Chat with TJ</button>
+                </div>
             </div>
         </div>
     </div>
@@ -51,6 +68,7 @@
         <p>&copy; {{ now.year }} SUNY Broome Engineering Science. All rights reserved.</p>
     </footer>
 
+    <script src="{{ url_for('static', filename='js/animation.js') }}"></script>
     <script>
         function sendMessage() {
             const userInput = document.getElementById('userInput');
@@ -58,19 +76,14 @@
             const message = userInput.value.trim();
             
             if (message) {
-                // Add user message
                 const userDiv = document.createElement('div');
                 userDiv.className = 'message user-message';
                 userDiv.textContent = message;
                 chatContainer.appendChild(userDiv);
                 
-                // Clear input
                 userInput.value = '';
-                
-                // Scroll to bottom
                 chatContainer.scrollTop = chatContainer.scrollHeight;
                 
-                // Send to backend
                 fetch('/api/chat', {
                     method: 'POST',
                     headers: {
@@ -80,13 +93,10 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Add assistant message
                     const assistantDiv = document.createElement('div');
                     assistantDiv.className = 'message assistant-message';
                     assistantDiv.textContent = data.reply;
                     chatContainer.appendChild(assistantDiv);
-                    
-                    // Scroll to bottom
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                 })
                 .catch(error => {
@@ -99,7 +109,22 @@
             }
         }
 
-        // Allow Enter key to send message
+        let strobeAcknowledged = false;
+
+        function confirmStrobe() {
+            if (!strobeAcknowledged) {
+                document.getElementById('strobeWarning').style.display = 'flex';
+                return false;
+            }
+            return true;
+        }
+
+        function acknowledgeWarning() {
+            strobeAcknowledged = true;
+            document.getElementById('strobeWarning').style.display = 'none';
+            document.querySelector('.button.flash').click();
+        }
+
         document.getElementById('userInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();

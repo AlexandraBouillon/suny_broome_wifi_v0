@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# Global state
+led_status = "OFF"  # Track LED status globally
+
 # Setup LED and temperature sensor
 try:
     led = machine.Pin("LED", machine.Pin.OUT)
@@ -48,26 +51,24 @@ def read_temperature():
         return 25.0  # Return dummy value for testing
 
 def flash_led():
-    """Flash the LED 5 times"""
+    """Set LED to flash mode"""
+    global led_status
     try:
-        for _ in range(5):
-            led.value(1)
-            time.sleep(0.5)
-            led.value(0)
-            time.sleep(0.5)
-        logger.info("LED flashed successfully")
+        led_status = "FLASH"  # Set status to FLASH
+        led.value(1)  # Turn on LED initially
+        logger.info("LED flash mode activated")
     except Exception as e:
-        logger.error(f"Error flashing LED: {e}")
+        logger.error(f"Error setting flash mode: {e}")
 
 @app.route('/')
 def index():
     """Render the main page with current LED and temperature status"""
     try:
         temperature = read_temperature()
-        status = "ON" if led.value() else "OFF"
+        global led_status
         return render_template('index.html', 
                              temperature=temperature, 
-                             status=status,
+                             status=led_status,
                              now=datetime.now())
     except Exception as e:
         logger.error(f"Error rendering index: {e}")
@@ -77,7 +78,9 @@ def index():
 def light_on():
     """Turn the LED on"""
     try:
+        global led_status
         led.value(1)
+        led_status = "ON"
         logger.info("LED turned ON")
         return redirect(url_for('index'))
     except Exception as e:
@@ -88,7 +91,9 @@ def light_on():
 def light_off():
     """Turn the LED off"""
     try:
+        global led_status
         led.value(0)
+        led_status = "OFF"
         logger.info("LED turned OFF")
         return redirect(url_for('index'))
     except Exception as e:
@@ -97,10 +102,10 @@ def light_off():
 
 @app.route('/flash')
 def flash():
-    """Flash the LED"""
+    """Set LED to flash mode"""
     try:
         flash_led()
-        logger.info("LED flash sequence completed")
+        logger.info("LED flash mode initiated")
         return redirect(url_for('index'))
     except Exception as e:
         logger.error(f"Error in flash sequence: {e}")
@@ -122,7 +127,6 @@ def chat():
             }), 400
         
         # Get current LED and temperature status for context
-        led_status = "ON" if led.value() else "OFF"
         temperature = read_temperature()
         context = f"LED is currently {led_status}. Temperature is {temperature}°C."
         
@@ -151,9 +155,10 @@ def get_status():
     API endpoint to get current LED and temperature status
     """
     try:
+        global led_status
         return jsonify({
             'status': 'success',
-            'led_status': "ON" if led.value() else "OFF",
+            'led_status': led_status,
             'temperature': read_temperature()
         })
     except Exception as e:

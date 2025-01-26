@@ -126,7 +126,12 @@ def flash():
             }
         )
         logger.info(f"Flash response: Status={response.status_code}, Text='{response.text}'")
-        return home()
+        # Instead of calling home(), just return a success response
+        return jsonify({
+            "status": "success",
+            "message": "Flash command sent",
+            "led_status": "FLASH"
+        })
     except requests.exceptions.Timeout:
         logger.error("Request timed out while connecting to Pico")
         return "Connection timed out", 504
