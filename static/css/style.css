@@ -135,7 +135,7 @@ h1 {
     box-shadow: var(--shadow-glow);
 }
 
-/* Chat Panel */
+/* Chat Panel Layout */
 .chat-panel {
     flex: 1;
     min-width: 300px;
@@ -146,9 +146,11 @@ h1 {
     box-shadow: var(--shadow-natural);
     display: flex;
     flex-direction: column;
+    gap: 20px;
+    padding: 20px;
     transition: box-shadow 0.3s ease;
     animation: glow 2s infinite alternate;
-    z-index: 2; /* Higher z-index than main-content */
+    z-index: 2;
 }
 
 .chat-panel:hover {
@@ -195,60 +197,94 @@ h1 {
 }
 
 .chat-input-container {
-    padding: 15px;
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 0;
+    width: 100%;  /* Ensure full width */
 }
 
 .chat-input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(237, 179, 31, 0.3);
+    border-radius: 25px;  /* Pill shape for input */
     background-color: rgba(255, 255, 255, 0.1);
+    color: #edb31f;
 }
 
-/* Button styles */
+/* LED Control Panel */
+.led-control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding: 30px;
+    align-items: center;
+    width: 100%;
+    max-width: 800px;
+}
+
+/* Status Container */
+.status-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 40px;  /* Added space below status container */
+}
+
+/* LED status and temperature displays */
+.led-status, .temperature {
+    padding: 15px;         /* Added more padding */
+    margin-bottom: 10px;   /* Space between status items */
+    background-color: rgba(0, 0, 0, 0.3);  /* Subtle background */
+    border: 1px solid rgba(237, 179, 31, 0.2);  /* Subtle gold border */
+    border-radius: 15px;   /* Rounded corners */
+}
+
+/* Button Container */
 .button-container {
-    perspective: 500px; /* Adjust perspective for desired effect */
-  }
-  
-  .button {
-    display: inline-block;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    width: auto;
+    white-space: nowrap;
+    margin-top: 20px;  /* Added space above buttons */
+}
+
+/* Button Base */
+.button {
+    flex: 0 0 auto;        /* Don't grow, don't shrink, auto base size */
+    width: auto;
+    min-width: 120px;
     padding: 15px 25px;
-    background-color: #38D2D2; /* Default background color */
-    color: #fff;
-    border: none;
-    border-radius: 25px; /* Rounded corners for a bulbous look */
+    background-color: #000;
+    color: #edb31f;
+    border: 2px solid #edb31f;
+    border-radius: 25px;
     font-weight: bold;
     font-size: 16px;
     text-decoration: none;
     text-align: center;
     cursor: pointer;
-    margin: 10px;
-    transition: transform 0.3s ease-out; /* Smooth transition on hover */
-  }
-  
-  .button.on {
-    background-color: #2ecc71; /* Green for 'On' */
-  }
-  
-  .button.off {
-    background-color: #e74c3c; /* Red for 'Off' */
-  }
-  
-  .button.flash {
-    background-color: #3498db; /* Blue for 'Flash' */
-  }
-  
-  .button.chat {
-    background-color: #bdc3c7; /* Platinum or grey for 'Chat' */
-  }
-  
-  .button-container:hover .button {
-    transform: translateZ(10px) rotateX(3deg); /* Adjust values for desired bulge */
-  }
-  
+    transition: all 0.3s ease-out;
+}
+
+/* Button Hover */
+.button:hover {
+    background-color: #edb31f;
+    color: #000;
+    box-shadow: 0 0 15px rgba(237, 179, 31, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Chat Button Specific */
+.chat-input-container .button.chat {
+    width: 100%;
+}
 
 /* Footer */
 footer {
@@ -321,7 +357,7 @@ footer a:hover {
     transform: translateY(-2px);
 }
 
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 768px) {
     .main-content {
         padding: 60px 10px;
@@ -337,7 +373,18 @@ footer a:hover {
         flex-direction: column;
     }
 
+    .led-control-panel {
+        min-width: 300px;
+        padding: 20px;
+    }
+    
     .button {
-        width: 100%;
+        min-width: 100px;
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    .button-container {
+        gap: 10px;
     }
 }

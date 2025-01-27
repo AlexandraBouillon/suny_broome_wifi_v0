@@ -2,7 +2,7 @@ from PIL import Image
 import os
 
 # Create PNG version
-webp_path = 'static/images/cropped-B-Lettermark-Gold-32x32.webp'
+webp_path = 'static/css/cropped-B-Lettermark-Gold-32x32.webp'
 img = Image.open(webp_path)
 img.save('static/images/favicon.png', 'PNG')
 
