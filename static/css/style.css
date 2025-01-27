@@ -217,11 +217,20 @@ h1 {
 .led-control-panel {
     display: flex;
     flex-direction: column;
-    gap: 25px;
-    padding: 30px;
     align-items: center;
     width: 100%;
     max-width: 800px;
+    padding: 40px;
+    gap: 30px;
+}
+
+/* Panel Title */
+.led-control-panel h2 {
+    margin: 0;     /* Remove default margins */
+    padding: 0;    /* Remove default padding */
+    color: #edb31f;
+    font-size: 24px;
+    margin-bottom: 20px;  /* Space after title */
 }
 
 /* Status Container */
@@ -231,16 +240,16 @@ h1 {
     gap: 15px;
     text-align: center;
     width: 100%;
-    margin-bottom: 40px;  /* Added space below status container */
+    margin-bottom: 30px;  /* Consistent bottom margin */
 }
 
 /* LED status and temperature displays */
 .led-status, .temperature {
-    padding: 15px;         /* Added more padding */
-    margin-bottom: 10px;   /* Space between status items */
-    background-color: rgba(0, 0, 0, 0.3);  /* Subtle background */
-    border: 1px solid rgba(237, 179, 31, 0.2);  /* Subtle gold border */
-    border-radius: 15px;   /* Rounded corners */
+    padding: 15px;
+    margin: 0;  /* Remove default margins */
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(237, 179, 31, 0.2);
+    border-radius: 15px;
 }
 
 /* Button Container */
@@ -252,7 +261,9 @@ h1 {
     gap: 20px;
     width: auto;
     white-space: nowrap;
-    margin-top: 20px;  /* Added space above buttons */
+    margin: 0;
+    margin-bottom: 20px;  /* Added space below buttons */
+    padding-bottom: 20px; /* Additional padding at bottom */
 }
 
 /* Button Base */
