@@ -4,7 +4,7 @@ import machine
 import network
 import socket
 
-# Import from local config.py
+# Import credentials - will fail if config.py is missing
 from config import WIFI_SSID, WIFI_PASSWORD
 
 def wifi_connect():
@@ -49,7 +49,9 @@ def webpage(temperature, state):
 def serve(connection):
     state = 'OFF'
     pico_led.off()
-    temperature = 0
+    temperature = pico_temp_sensor.temp  # Initial temperature reading
+    print(f"Starting temperature: {temperature}°C")
+    
     while True:
         client = connection.accept()[0]
         request = client.recv(1024)
@@ -59,8 +61,9 @@ def serve(connection):
         except IndexError:
             pass
         
-        # Debug print
-        print(f"Received request: {request}")
+        # Get fresh temperature reading
+        temperature = pico_temp_sensor.temp
+        print(f"Temperature: {temperature}°C")
         
         if request == '/lighton?' or request == '/lighton':
             pico_led.on()
@@ -79,13 +82,11 @@ def serve(connection):
             state = 'OFF'
             print("Flash sequence completed")
         elif request == '/status':
-            # Just return the current state without HTML
             response = f'HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\n{state}'
             client.send(response.encode())
             client.close()
             continue
             
-        temperature = pico_temp_sensor.temp
         html = webpage(temperature, state)
         response = 'HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n' + html
         client.send(response.encode())

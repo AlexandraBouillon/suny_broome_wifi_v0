@@ -72,7 +72,7 @@ def home():
     try:
         status = led_service.get_status()
         temperature = led_service.get_temperature()
-        logger.info(f"Current LED status: {status}, Temperature: {temperature}")
+        logger.info(f"Home route - LED status: {status}, Temperature: {temperature}")
         return render_template('index.html', 
                              status=status,
                              temperature=temperature,
@@ -105,7 +105,9 @@ def light_off():
 @app.route('/flash')
 def flash():
     try:
-        led_service.flash()
+        status = led_service.flash()
+        logger.info(f"Flash status: {status}")
+        # Get fresh status and temperature before redirecting
         return redirect(url_for('home'))
     except Exception as e:
         logger.error(f"Error setting flash: {e}")

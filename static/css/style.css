@@ -141,9 +141,9 @@ body {
 h1 {
     color: #edb31f;
     text-align: center;
-    margin: 20px 0;
+    margin: 0;
     font-size: 2.5em;
-    text-shadow: 0 0 10px rgba(237, 179, 31, 0.5);
+    text-shadow: none;
 }
 
 .container:hover {
@@ -184,7 +184,7 @@ h1 {
     align-items: center;
     gap: 10px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    font-size: 0.9em;   
+    font-size: 1.2rem;
 }
 
 .chat-title img {
@@ -205,7 +205,7 @@ h1 {
     padding: 5px;   
     border-radius: 5px;
     max-width: 80%;
-    font-size: 0.9em;  
+    font-size: 1.2rem;
 }
 
 .user-message {
@@ -245,12 +245,19 @@ h1 {
     max-width: 600px;
     padding: 15px;
     gap: 20px;   
+    animation: none;
 }
 
 /* Panel Title */
-.led-control-panel h2 {
-    font-size: 16px;
-    margin-bottom: 2px;   
+.led-control-panel h2,
+.chat-title h2 {
+    color: #edb31f;
+    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 0px;
+    padding: 0;
+    text-shadow: none;
+    animation: none;
 }
 
 /* Status Container */
@@ -260,15 +267,18 @@ h1 {
     align-items: center;
     gap: 15px;   
     margin: 15px 0;  
+    animation: none;
 }
 
 /* LED status and temperature displays */
 .status-item {
     font-size: 0.9rem;
-    padding: 15px 30px;   
+    padding: 15px 30px;
     border-radius: 8px;
     background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--primary-color);
+    border: 1px solid #edb31f;
+    animation: none;
+    text-shadow: none;
 }
 
 /* Button Container */
@@ -289,17 +299,18 @@ h1 {
     flex: 0 0 auto;         
     width: auto;
     min-width: 80px;
-    padding: 15px 30px;   
+    padding: 15px 30px;
     background-color: #000;
     color: #edb31f;
     border: 2px solid #edb31f;
     border-radius: 25px;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 1.2rem;
     text-decoration: none;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease-out;
+    animation: glow 2s infinite alternate;
 }
 
 /* Button Hover */
@@ -410,7 +421,7 @@ footer a:hover {
     .button {
         min-width: 100px;
         padding: 12px 20px;
-        font-size: 14px;
+        font-size: 1.2rem;
     }
 
     .button-container {
@@ -421,10 +432,5 @@ footer a:hover {
 /* Update text colors for better visibility on black background */
 .status, .temperature {
     color: white;
-    text-shadow: 0 0 5px var(--primary-color);
-}
-
-.chat-title h2 {
-    color: #edb31f; 
     text-shadow: 0 0 5px var(--primary-color);
 }

@@ -50,7 +50,7 @@
         <div class="chat-panel">
             <div class="chat-title">
                 <img src="{{ url_for('static', filename='images/tjwatson-avatar.png') }}" alt="TJ Avatar">
-                <h2>AI Assistant, TJ</h2>
+                <h2>AI Assistant</h2>
             </div>
             <div class="chat-container" id="chatContainer"></div>
             <div class="chat-input-container">
@@ -74,16 +74,16 @@
             const userInput = document.getElementById('userInput');
             const chatContainer = document.getElementById('chatContainer');
             const message = userInput.value.trim();
-            
+
             if (message) {
                 const userDiv = document.createElement('div');
                 userDiv.className = 'message user-message';
                 userDiv.textContent = message;
                 chatContainer.appendChild(userDiv);
-                
+
                 userInput.value = '';
                 chatContainer.scrollTop = chatContainer.scrollHeight;
-                
+
                 fetch('/api/chat', {
                     method: 'POST',
                     headers: {

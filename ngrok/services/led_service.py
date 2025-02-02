@@ -2,6 +2,7 @@ import logging
 import requests
 import os
 from dotenv import load_dotenv
+from time import sleep
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +19,7 @@ class LEDService:
     def _make_pico_request(self, endpoint):
         """Make a request to the Pico"""
         try:
-            url = f"{self.pico_url}/{endpoint}?"  # Add the question mark
+            url = f"{self.pico_url}/{endpoint}?"
             logger.info(f"Making request to Pico: {url}")
             
             response = requests.get(url, timeout=5)
@@ -26,28 +27,21 @@ class LEDService:
             logger.info(f"Pico response text: {response.text}")
             
             if response.status_code == 200:
-                # Parse temperature and state from response
-                try:
-                    # Look for temperature and LED state in response
-                    temp_start = response.text.find("Temperature is ") + len("Temperature is ")
-                    temp_end = response.text.find("</p>", temp_start)
-                    if temp_start > -1 and temp_end > -1:
-                        self.temperature = float(response.text[temp_start:temp_end])
+                # Parse status from response
+                state_start = response.text.find("LED is ") + len("LED is ")
+                state_end = response.text.find("</p>", state_start)
+                if state_start > -1 and state_end > -1:
+                    self.status = response.text[state_start:state_end]
                     
-                    state_start = response.text.find("LED is ") + len("LED is ")
-                    state_end = response.text.find("</p>", state_start)
-                    if state_start > -1 and state_end > -1:
-                        self.status = response.text[state_start:state_end]
-                        
-                    logger.info(f"Parsed temperature: {self.temperature}, status: {self.status}")
-                except Exception as e:
-                    logger.error(f"Error parsing response: {e}")
-                
                 return self.status
             else:
                 logger.error(f"Pico returned status code: {response.status_code}")
                 return None
                 
+        except requests.exceptions.ReadTimeout:
+            # Don't change status on timeout for regular requests
+            logger.error("Timeout while communicating with Pico")
+            return None
         except Exception as e:
             logger.error(f"Error communicating with Pico: {type(e).__name__}: {str(e)}")
             return None
@@ -76,10 +70,16 @@ class LEDService:
         
     def flash(self):
         try:
+            # First update our local status
+            self.status = "FLASHING"
+            
+            # Then send the flash command to Pico
             pico_status = self._make_pico_request('flash')
-            if pico_status:
-                self.status = "FLASH"
-            logger.info(f"LED set to FLASH, Pico status: {pico_status}")
+            
+            # After flash completes, get the current status
+            self.status = self._make_pico_request('')
+            
+            logger.info(f"Flash sequence completed, final status: {self.status}")
             return self.status
         except Exception as e:
             logger.error(f"Error setting LED to flash: {e}")
