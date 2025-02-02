@@ -5,17 +5,28 @@
     --suny-gold: #edb31f;
     --panel-bg: rgba(237, 179, 31, 0.9);  /* Semi-transparent gold */
     --text-color: #333;
-    --shadow-natural: 0 0 20px rgba(237, 179, 31, 0.3);
-    --shadow-glow: 0 0 30px rgba(237, 179, 31, 0.5);
+    --shadow-natural: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 15px rgba(237, 179, 31, 0.5);
     --font-size-normal: 18px;
     --line-height: 1.7em;
+    --primary-color: #edb31f;
+    --secondary-color: #004c97;
+    --background-color: #f5f5f5;
+    --transition-speed: 0.3s;
 }
 
 /* Flash Animation */
 @keyframes glow {
-    0% { text-shadow: 0 0 10px #edb31f; }
-    50% { text-shadow: 0 0 20px #edb31f, 0 0 30px #edb31f; }
-    100% { text-shadow: 0 0 10px #edb31f; }
+    from {
+        box-shadow: 0 0 5px var(--primary-color),
+                   0 0 10px var(--primary-color),
+                   0 0 15px var(--primary-color);
+    }
+    to {
+        box-shadow: 0 0 10px var(--primary-color),
+                   0 0 20px var(--primary-color),
+                   0 0 30px var(--primary-color);
+    }
 }
 
 /* Base Reset */
@@ -105,11 +116,15 @@ body {
 
 /* Container styles */
 .container {
-    flex: 1;
-    padding: 20px;
-    position: relative;
-    z-index: 2; /* Higher z-index than main-content */
+    background-color: #000;
+    padding: 2rem;
+    border-radius: 15px;
+    border: 2px solid var(--primary-color);
+    max-width: 800px;
+    margin: 2rem auto;
+    transition: transform var(--transition-speed);
     animation: glow 2s infinite alternate;
+    color: white;
 }
 
 /* Canvas container */
@@ -137,23 +152,27 @@ h1 {
 
 /* Chat Panel Layout */
 .chat-panel {
-    flex: 1;
-    min-width: 300px;
-    max-width: 500px;
-    margin: 20px;
     background-color: #000;
-    border-radius: 10px;
-    box-shadow: var(--shadow-natural);
+    padding: 2rem;
+    border-radius: 15px;
+    border: 2px solid transparent;
+    max-width: 500px;
+    min-width: 300px;
+    margin: 20px auto;
+    transition: transform var(--transition-speed), 
+                border-color var(--transition-speed),
+                box-shadow var(--transition-speed);
+    animation: glow 2s infinite alternate;
+    color: white;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 20px;
-    transition: box-shadow 0.3s ease;
-    animation: glow 2s infinite alternate;
-    z-index: 2;
 }
 
 .chat-panel:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-glow);
 }
 
@@ -237,33 +256,31 @@ h1 {
 .status-container {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 15px;
-    text-align: center;
-    width: 100%;
-    margin-bottom: 30px;  /* Consistent bottom margin */
+    margin: 20px 0;
 }
 
 /* LED status and temperature displays */
-.led-status, .temperature {
-    padding: 15px;
-    margin: 0;  /* Remove default margins */
-    background-color: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(237, 179, 31, 0.2);
-    border-radius: 15px;
+.status-item {
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--primary-color);
 }
 
 /* Button Container */
 .button-container {
     display: flex;
-    flex-direction: row;
     justify-content: center;
-    align-items: center;
     gap: 20px;
-    width: auto;
-    white-space: nowrap;
-    margin: 0;
-    margin-bottom: 20px;  /* Added space below buttons */
-    padding-bottom: 20px; /* Additional padding at bottom */
+    margin: 20px 0;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
 }
 
 /* Button Base */
@@ -398,4 +415,15 @@ footer a:hover {
     .button-container {
         gap: 10px;
     }
+}
+
+/* Update text colors for better visibility on black background */
+.status, .temperature {
+    color: white;
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+.chat-title h2 {
+    color: white;
+    text-shadow: 0 0 5px var(--primary-color);
 }
