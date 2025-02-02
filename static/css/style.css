@@ -267,19 +267,22 @@ h1 {
 
 /* Controls Container */
 .controls-container {
+    position: relative;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     gap: 30px;
-    margin: 20px 0;
+    width: 100%;
+    padding: 20px 0;
 }
 
 /* Toggle Switch */
 .switch {
     position: relative;
     display: inline-block;
-    width: 80px;
-    height: 140px;
+    width: 60px;
+    height: 100px;  /* Taller height for vertical toggle */
+    flex-shrink: 0;
 }
 
 .switch input {
@@ -295,77 +298,54 @@ h1 {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #000000; /* OFF state: black */
+    background-color: #000000;
     transition: .4s;
-    border: 2px solid var(--suny-gold); /* Gold border */
+    border: 2px solid var(--suny-gold);
+    border-radius: 50px;
 }
 
 .slider:before {
     position: absolute;
     content: "";
-    height: 70px;
-    width: 70px;
-    left: 3px;
-    bottom: 4px;
-    background-color: var(--suny-gold); /* Gold thumb */
+    height: 46px;
+    width: 46px;
+    left: 5px;
+    bottom: 5px;  /* Start at bottom by default */
+    background-color: var(--suny-gold);
     transition: .4s;
-}
-
-input:checked + .slider {
-    background-color: var(--suny-gold); /* ON state: gold */
-}
-
-input:checked + .slider:before {
-    background-color: #000000; /* Black thumb when ON */
-    transform: translateY(-60px);
-}
-
-/* Rounded sliders */
-.slider.round {
-    border-radius: 40px;
-}
-
-.slider.round:before {
     border-radius: 50%;
 }
 
-/* Focus state */
-input:focus + .slider {
-    box-shadow: 0 0 5px var(--suny-gold); /* Gold glow on focus */
+/* Move to top when checked */
+input:checked + .slider:before {
+    transform: translateY(-44px);
 }
 
 /* Flash Button */
 .flash-button {
-    width: 80px;
-    height: 140px;
-    border-radius: 70px;
-    background-color: #000000;
-    border: 2px solid var(--suny-gold);
-    cursor: pointer;
-    font-size: 3rem;
-    color: var(--suny-gold);
+    padding: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    width: 60px;
+    height: 100px;  /* Match toggle height */
+    border-radius: 50px;  /* Match toggle roundness */
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
-    padding: 0;
+    border: 2px solid var(--suny-gold);
+    background-color: #000000;
+    color: var(--suny-gold);
+    transition: .4s;
 }
 
-/* Hover and Active States */
 .flash-button:hover {
-    background-color: rgba(237, 179, 31, 0.1);
-}
-
-.flash-button:active {
     background-color: var(--suny-gold);
     color: #000000;
-    transform: scale(0.95);
 }
 
-/* Focus state */
-.flash-button:focus {
-    outline: none;
-    box-shadow: 0 0 5px var(--suny-gold);
+.flash-button h1 {
+    font-size: 2rem;
+    margin: 0;
 }
 
 /* Button Container */
@@ -514,11 +494,33 @@ footer a:hover {
     text-shadow: 0 0 5px var(--suny-gold);
 }
 
-/* Add these new styles while keeping existing ones */
+/* Mobile adjustments */
+@media screen and (max-width: 480px) {
+    .controls-container {
+        gap: 20px;
+        padding: 15px 0;
+    }
 
-.status-controls {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 20px;
+    .switch {
+        width: 50px;
+        height: 90px;  /* Slightly smaller but maintain proportion */
+    }
+
+    .slider:before {
+        bottom: 5px;  /* Start at bottom by default */
+    }
+
+    input:checked + .slider:before {
+        transform: translateY(-40px);  /* Slightly smaller movement for mobile */
+    }
+
+    .flash-button {
+        width: 50px;
+        height: 90px;  /* Match toggle height */
+        border-radius: 45px;
+    }
+
+    .flash-button h1 {
+        font-size: 1.75rem;
+    }
 }

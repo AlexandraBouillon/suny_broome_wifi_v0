@@ -52,24 +52,28 @@ def home():
 @app.route('/light_on')
 def light_on():
     try:
-        # Make the request and get updated state
         response = pico_service.make_request('light_on', "Turn ON request")
         logger.info(f"Light ON response - Status: {response.text}, Temp: {response.temperature}")
-        return redirect(url_for('home'))
+        return jsonify({
+            'status': response.text,
+            'temperature': response.temperature
+        })
     except Exception as e:
         logger.error(f"Error turning light on: {e}")
-        return redirect(url_for('home'))
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/light_off')
 def light_off():
     try:
-        # Make the request and get updated state
         response = pico_service.make_request('light_off', "Turn OFF request")
         logger.info(f"Light OFF response - Status: {response.text}, Temp: {response.temperature}")
-        return redirect(url_for('home'))
+        return jsonify({
+            'status': response.text,
+            'temperature': response.temperature
+        })
     except Exception as e:
         logger.error(f"Error turning light off: {e}")
-        return redirect(url_for('home'))
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/flash')
 def flash():

@@ -60,23 +60,21 @@ class PicoService:
             return False
     
     def make_request(self, endpoint, description="Request"):
-        """Make a request to the Pico via ngrok"""
         try:
             if not self.pico_url:
                 logger.error("No NGROK_URL configured")
                 return type('Response', (), {'text': 'OFF', 'status_code': 200, 'temperature': 0})()
                 
             url = f"{self.pico_url}/{endpoint}"
-            logger.info("\n" + "=" * 50)
             logger.info(f"Making {description} to URL: {url}")
             
             try:
-                response = requests.get(url, headers=self.headers, verify=False, timeout=5)
+                response = requests.get(url, headers=self.headers, verify=False, timeout=10)  # Increased timeout
                 logger.info(f"Response Status: {response.status_code}")
-                logger.info(f"Raw Response Content: {response.text}")  # Log the raw response
+                logger.info(f"Raw Response Content: {response.text}")
                 
                 if response.status_code == 200:
-                    # Set initial status based on endpoint
+                    # Set status based on endpoint immediately
                     if endpoint == 'light_on':
                         self.status = "ON"
                     elif endpoint == 'light_off':
@@ -84,11 +82,12 @@ class PicoService:
                     elif endpoint == 'flash':
                         self.status = "FLASH"
                     
-                    # Parse the response HTML
-                    self._parse_response(response.text)
+                    # Try to parse response, but use endpoint-based status if parsing fails
+                    if not self._parse_response(response.text):
+                        logger.warning("Failed to parse response, using endpoint-based status")
+                    
                     logger.info(f"Final values - Status: {self.status}, Temperature: {self.temperature}")
                     
-                    # Return custom response object
                     return type('Response', (), {
                         'text': self.status,
                         'status_code': 200,
@@ -98,13 +97,10 @@ class PicoService:
                 logger.error(f"Bad response status: {response.status_code}")
                 return type('Response', (), {'text': 'OFF', 'status_code': response.status_code, 'temperature': 0})()
                 
-            except requests.exceptions.ConnectionError:
-                logger.error("Connection failed - Check if ngrok tunnel is active")
-                return type('Response', (), {'text': 'OFF', 'status_code': 200, 'temperature': 0})()
-            except requests.exceptions.Timeout:
-                logger.error("Request timed out")
-                return type('Response', (), {'text': 'OFF', 'status_code': 200, 'temperature': 0})()
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Request failed: {str(e)}")
+                return type('Response', (), {'text': 'OFF', 'status_code': 500, 'temperature': 0})()
                 
         except Exception as e:
             logger.error(f"Error in {description}: {type(e).__name__}: {str(e)}")
-            return type('Response', (), {'text': 'OFF', 'status_code': 200, 'temperature': 0})() 
+            return type('Response', (), {'text': 'OFF', 'status_code': 500, 'temperature': 0})() 

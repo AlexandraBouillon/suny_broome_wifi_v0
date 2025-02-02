@@ -24,7 +24,7 @@ const LED_CONFIG = {
     animation: {
         speed: 0.06,
         statusCheckInterval: 500,
-        strobeSpeed: 100
+        strobeSpeed: 25
     }
 };
 // State tracking
