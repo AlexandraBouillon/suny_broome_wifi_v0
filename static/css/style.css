@@ -1,4 +1,4 @@
-/* Root Variables and Defaults */
+/* Root Variables */
 :root {
     --logo-font: "adobe-garamond-pro", "EB Garamond", "Garamond", "Times New Roman", serif;
     --body-font: "Nunito Sans", Arial, sans-serif;
@@ -7,39 +7,22 @@
     --text-color: #333;
     --shadow-natural: 0 4px 6px rgba(0, 0, 0, 0.1);
     --shadow-glow: 0 0 15px rgba(237, 179, 31, 0.5);
-    --font-size-normal: 18px;
-    --line-height: 1.7em;
-    --primary-color: #edb31f;
-    --secondary-color: #004c97;
-    --background-color: #f5f5f5;
     --transition-speed: 0.3s;
 }
 
-/* Flash Animation */
+/* Common Animations */
 @keyframes glow {
-    from {
-        box-shadow: 0 0 5px var(--primary-color),
-                   0 0 10px var(--primary-color),
-                   0 0 15px var(--primary-color);
-    }
-    to {
-        box-shadow: 0 0 10px var(--primary-color),
-                   0 0 20px var(--primary-color),
-                   0 0 30px var(--primary-color);
-    }
+    from { box-shadow: 0 0 5px var(--suny-gold), 0 0 10px var(--suny-gold), 0 0 15px var(--suny-gold); }
+    to { box-shadow: 0 0 10px var(--suny-gold), 0 0 20px var(--suny-gold), 0 0 30px var(--suny-gold); }
 }
 
-/* Base Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Base Styles */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     font-family: Arial, sans-serif;
     background-color: #000;
-    color: #edb31f;
+    color: var(--suny-gold);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -119,7 +102,7 @@ body {
     background-color: #000;
     padding: 1.5rem;
     border-radius: 15px;
-    border: 2px solid var(--primary-color);
+    border: 2px solid var(--suny-gold);
     max-width: 800px;
     margin: 2rem auto;
     transition: transform var(--transition-speed);
@@ -139,7 +122,7 @@ body {
 
 /* Header styles */
 h1 {
-    color: #edb31f;
+    color: var(--suny-gold);
     text-align: center;
     margin: 0;
     font-size: 2.5em;
@@ -163,7 +146,7 @@ h1 {
                 border-color var(--transition-speed),
                 box-shadow var(--transition-speed);
     animation: glow 2s infinite alternate;
-    color: #edb31f; 
+    color: var(--suny-gold); 
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -171,14 +154,14 @@ h1 {
 }
 
 .chat-panel:hover {
-    border-color: var(--primary-color);
+    border-color: var(--suny-gold);
     transform: translateY(-2px);
     box-shadow: var(--shadow-glow);
 }
 
 /* Chat Components */
 .chat-title {
-    color: #edb31f; 
+    color: var(--suny-gold); 
     padding: 5px;
     display: flex;
     align-items: center;
@@ -232,7 +215,7 @@ h1 {
     border: 1px solid rgba(237, 179, 31, 0.3);
     border-radius: 25px;  
     background-color: rgba(255, 255, 255, 0.1);
-    color: #edb31f;
+    color: var(--suny-gold);
     font-size: 0.9em;
 }
 
@@ -252,7 +235,7 @@ h1 {
 /* Panel Title */
 .led-control-panel h2,
 .chat-title h2 {
-    color: #edb31f;
+    color: var(--suny-gold);
     text-align: center;
     font-size: 1.5rem;
     margin-bottom: 0px;
@@ -273,7 +256,7 @@ h1 {
     padding: 20px 30px;
     border-radius: 8px;
     background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid #edb31f;
+    border: 1px solid var(--suny-gold);
     text-align: center;
 }
 
@@ -314,7 +297,7 @@ h1 {
     bottom: 0;
     background-color: #000000; /* OFF state: black */
     transition: .4s;
-    border: 2px solid #edb31f; /* Gold border */
+    border: 2px solid var(--suny-gold); /* Gold border */
 }
 
 .slider:before {
@@ -324,12 +307,12 @@ h1 {
     width: 70px;
     left: 3px;
     bottom: 4px;
-    background-color: #edb31f; /* Gold thumb */
+    background-color: var(--suny-gold); /* Gold thumb */
     transition: .4s;
 }
 
 input:checked + .slider {
-    background-color: #edb31f; /* ON state: gold */
+    background-color: var(--suny-gold); /* ON state: gold */
 }
 
 input:checked + .slider:before {
@@ -348,7 +331,7 @@ input:checked + .slider:before {
 
 /* Focus state */
 input:focus + .slider {
-    box-shadow: 0 0 5px #edb31f; /* Gold glow on focus */
+    box-shadow: 0 0 5px var(--suny-gold); /* Gold glow on focus */
 }
 
 /* Flash Button */
@@ -357,10 +340,10 @@ input:focus + .slider {
     height: 140px;
     border-radius: 70px;
     background-color: #000000;
-    border: 2px solid #edb31f;
+    border: 2px solid var(--suny-gold);
     cursor: pointer;
     font-size: 3rem;
-    color: #edb31f;
+    color: var(--suny-gold);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -374,7 +357,7 @@ input:focus + .slider {
 }
 
 .flash-button:active {
-    background-color: #edb31f;
+    background-color: var(--suny-gold);
     color: #000000;
     transform: scale(0.95);
 }
@@ -382,7 +365,7 @@ input:focus + .slider {
 /* Focus state */
 .flash-button:focus {
     outline: none;
-    box-shadow: 0 0 5px #edb31f;
+    box-shadow: 0 0 5px var(--suny-gold);
 }
 
 /* Button Container */
@@ -406,8 +389,8 @@ input:focus + .slider {
     min-width: 80px;
     padding: 15px 30px;
     background-color: #000;
-    color: #edb31f;
-    border: 2px solid #edb31f;
+    color: var(--suny-gold);
+    border: 2px solid var(--suny-gold);
     border-radius: 25px;
     font-weight: bold;
     font-size: 1.2rem;
@@ -420,7 +403,7 @@ input:focus + .slider {
 
 /* Button Hover */
 .button:hover {
-    background-color: #edb31f;
+    background-color: var(--suny-gold);
     color: #000;
     box-shadow: 0 0 15px rgba(237, 179, 31, 0.5);
     transform: translateY(-2px);
@@ -434,7 +417,7 @@ input:focus + .slider {
 /* Footer */
 footer {
     background-color: #000000;
-    color: #edb31f;
+    color: var(--suny-gold);
     padding: 20px;
     text-align: center;
     position: fixed;
@@ -445,7 +428,7 @@ footer {
 }
 
 footer a {
-    color: #edb31f;
+    color: var(--suny-gold);
     text-decoration: none;
     transition: all 0.3s ease;
     padding: 5px 10px;
@@ -454,9 +437,9 @@ footer a {
 
 footer a:hover {
     color: #fff;
-    text-shadow: 0 0 10px #edb31f,
-                 0 0 20px #edb31f,
-                 0 0 30px #edb31f;
+    text-shadow: 0 0 10px var(--suny-gold),
+                 0 0 20px var(--suny-gold),
+                 0 0 30px var(--suny-gold);
     background-color: rgba(237, 179, 31, 0.1);
 }
 
@@ -490,7 +473,7 @@ footer a:hover {
     margin-top: 20px;
     padding: 10px 20px;
     background-color: var(--text-color);
-    color: #edb31f; 
+    color: var(--suny-gold); 
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -502,7 +485,7 @@ footer a:hover {
     transform: translateY(-2px);
 }
 
-/* Responsive */
+/* Responsive Design */
 @media (max-width: 768px) {
     .main-content {
         padding: 60px 10px;
@@ -514,13 +497,8 @@ footer a:hover {
         margin: 10px;
     }
 
-    .controls {
+    .controls-container {
         flex-direction: column;
-    }
-
-    .led-control-panel {
-        min-width: 300px;
-        padding: 20px;
     }
 
     .button {
@@ -528,16 +506,12 @@ footer a:hover {
         padding: 12px 20px;
         font-size: 1.2rem;
     }
-
-    .button-container {
-        gap: 10px;
-    }
 }
 
 /* Update text colors for better visibility on black background */
 .status, .temperature {
     color: white;
-    text-shadow: 0 0 5px var(--primary-color);
+    text-shadow: 0 0 5px var(--suny-gold);
 }
 
 /* Add these new styles while keeping existing ones */

@@ -29,20 +29,16 @@
 
     <div class="main-content">
         <div class="container">
-            <div class="status-container">
-                <div class="status-item">
-                    <div class="status">LED Status: {{ status }}</div>
-                    <div class="temperature">Temperature: {{ temperature }}°C</div>
-                </div>
+            <div class="status-item">
+                <div class="status">LED Status: {{ status }}</div>
+                <div class="temperature">Temperature: {{ temperature }}°C</div>
             </div>
             <div class="controls-container">
                 <label class="switch">
                     <input type="checkbox" id="ledToggle" {% if status == 'ON' %}checked{% endif %}>
                     <span class="slider round"></span>
                 </label>
-                <button class="button flash-button" onclick="handleFlash()">
-                    <h1>⚠︎</h1>
-                </button>
+                <button class="button flash-button" onclick="handleFlash()">⚠︎</button>
             </div>
         </div>
 
@@ -68,76 +64,6 @@
     </footer>
 
     <script src="{{ url_for('static', filename='js/animation.js') }}"></script>
-    <script>
-        function sendMessage() {
-            const userInput = document.getElementById('userInput');
-            const chatContainer = document.getElementById('chatContainer');
-            const message = userInput.value.trim();
-
-            if (message) {
-                const userDiv = document.createElement('div');
-                userDiv.className = 'message user-message';
-                userDiv.textContent = message;
-                chatContainer.appendChild(userDiv);
-
-                userInput.value = '';
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-
-                fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({text: message})
-                })
-                .then(response => response.json())
-                .then(data => {
-                    const assistantDiv = document.createElement('div');
-                    assistantDiv.className = 'message assistant-message';
-                    assistantDiv.textContent = data.reply;
-                    chatContainer.appendChild(assistantDiv);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'message assistant-message error';
-                    errorDiv.textContent = `Error: ${error.message || error}`;
-                    chatContainer.appendChild(errorDiv);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                });
-            }
-        }
-
-        let strobeAcknowledged = false;
-
-        function confirmStrobe() {
-            if (!strobeAcknowledged) {
-                document.getElementById('strobeWarning').style.display = 'flex';
-                return false;
-            }
-            return true;
-        }
-
-        function acknowledgeWarning() {
-            strobeAcknowledged = true;
-            document.getElementById('strobeWarning').style.display = 'none';
-            document.querySelector('.button.flash').click();
-        }
-
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        document.getElementById('ledToggle').addEventListener('change', function(e) {
-            if (this.checked) {
-                window.location.href = '/light_on';
-            } else {
-                window.location.href = '/light_off';
-            }
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
