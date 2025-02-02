@@ -33,17 +33,15 @@
             <div class="status-container">
                 <div class="status-item">
                     <div class="status">LED Status: {{ status }}</div>
-                </div>
-                <div class="status-item">
                     <div class="temperature">Temperature: {{ temperature }}°C</div>
                 </div>
             </div>
-            <div class="button-container">
-                <div class="button-group">
-                    <a href="/light_on" class="button on">On</a>
-                    <a href="/light_off" class="button off">Off</a>
-                    <a href="#" class="button flash" onclick="handleFlash()">Flash</a>
-                </div>
+            <div class="controls-container">
+                <label class="switch">
+                    <input type="checkbox" id="ledToggle" {% if status == 'ON' %}checked{% endif %}>
+                    <span class="slider round"></span>
+                </label>
+                <a href="#" class="button flash" onclick="handleFlash()">Flash</a>
             </div>
         </div>
 
@@ -129,6 +127,14 @@
         document.getElementById('userInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
+            }
+        });
+
+        document.getElementById('ledToggle').addEventListener('change', function(e) {
+            if (this.checked) {
+                window.location.href = '/light_on';
+            } else {
+                window.location.href = '/light_off';
             }
         });
     </script>

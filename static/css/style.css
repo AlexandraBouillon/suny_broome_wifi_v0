@@ -263,35 +263,105 @@ h1 {
 /* Status Container */
 .status-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;   
-    margin: 15px 0;  
-    animation: none;
+    justify-content: center;
+    margin-bottom: 30px;
 }
 
-/* LED status and temperature displays */
 .status-item {
-    font-size: 0.9rem;
-    padding: 15px 30px;
+    font-size: 1rem;
+    padding: 20px 30px;
     border-radius: 8px;
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid #edb31f;
-    animation: none;
-    text-shadow: none;
+    text-align: center;
+}
+
+.status-item .status,
+.status-item .temperature {
+    margin: 10px 0;
+}
+
+/* Controls Container */
+.controls-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 80px;
+    height: 140px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #333;
+    transition: .4s;
+    border: 2px solid #edb31f;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 70px;
+    width: 70px;
+    left: 3px;
+    bottom: 4px;
+    background-color: #edb31f;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #000;
+}
+
+input:checked + .slider:before {
+    transform: translateY(-60px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 40px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Flash Button */
+.button.flash {
+    padding: 15px 30px;
+    font-size: 1rem;
 }
 
 /* Button Container */
 .button-container {
     display: flex;
-    justify-content: center;
-    gap: 20px;   
-    margin: 15px 0;  
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
 
 .button-group {
     display: flex;
-    gap: 20px;  
+    justify-content: center;
+    gap: 20px;
 }
 
 /* Button Base */
@@ -433,4 +503,13 @@ footer a:hover {
 .status, .temperature {
     color: white;
     text-shadow: 0 0 5px var(--primary-color);
+}
+
+/* Add these new styles while keeping existing ones */
+
+.status-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
 }
