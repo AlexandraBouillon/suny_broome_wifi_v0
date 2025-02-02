@@ -27,11 +27,21 @@ class LEDService:
             logger.info(f"Pico response text: {response.text}")
             
             if response.status_code == 200:
+                # Parse temperature from response
+                temp_start = response.text.find("Temperature is ") + len("Temperature is ")
+                temp_end = response.text.find("</p>", temp_start)
+                if temp_start > -1 and temp_end > -1:
+                    try:
+                        self.temperature = float(response.text[temp_start:temp_end].strip())
+                        logger.info(f"Parsed temperature: {self.temperature}")
+                    except ValueError as e:
+                        logger.error(f"Error converting temperature to float: {e}")
+                    
                 # Parse status from response
                 state_start = response.text.find("LED is ") + len("LED is ")
                 state_end = response.text.find("</p>", state_start)
                 if state_start > -1 and state_end > -1:
-                    self.status = response.text[state_start:state_end]
+                    self.status = response.text[state_start:state_end].strip()
                     
                 return self.status
             else:
