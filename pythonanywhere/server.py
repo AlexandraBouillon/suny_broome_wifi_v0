@@ -11,27 +11,32 @@ app = Flask(__name__,
            static_folder=Config.STATIC_DIR)
 
 # Initialize Pico service
-pico_service = PicoService(os.environ.get('NGROK_URL'))
+pico_service = PicoService()
 
 @app.route('/')
 def home():
     try:
         response = pico_service.make_request('', "Home page request")
+        status = response.text.strip() if response else "OFF"
+        # Ensure status is one of: ON, OFF, FLASH
+        if status not in ['ON', 'OFF', 'FLASH']:
+            status = 'OFF'
+        logger.info(f"Current LED status: {status}")
         return render_template('index.html', 
-                             status=response.text,
+                             status=status,
                              temperature=0,
                              now=datetime.now())
     except Exception as e:
         logger.error(f"Error in home route: {str(e)}")
         return render_template('index.html', 
-                             status="ERROR",
+                             status="OFF",
                              temperature=0,
                              now=datetime.now())
 
 @app.route('/light_on')
 def light_on():
     try:
-        pico_service.make_request('light_on', "Turn ON request")
+        response = pico_service.make_request('light_on', "Turn ON request")
         return redirect(url_for('home'))
     except Exception as e:
         logger.error(f"Error in light_on route: {str(e)}")
@@ -40,7 +45,7 @@ def light_on():
 @app.route('/light_off')
 def light_off():
     try:
-        pico_service.make_request('light_off', "Turn OFF request")
+        response = pico_service.make_request('light_off', "Turn OFF request")
         return redirect(url_for('home'))
     except Exception as e:
         logger.error(f"Error in light_off route: {str(e)}")
@@ -49,7 +54,7 @@ def light_off():
 @app.route('/flash')
 def flash():
     try:
-        pico_service.make_request('flash', "Flash request")
+        response = pico_service.make_request('flash', "Flash request")
         return redirect(url_for('home'))
     except Exception as e:
         logger.error(f"Error in flash route: {str(e)}")

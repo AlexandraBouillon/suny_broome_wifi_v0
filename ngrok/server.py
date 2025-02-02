@@ -70,45 +70,46 @@ def get_pico_temperature():
 @app.route('/')
 def home():
     try:
-        temperature = get_pico_temperature()
-        logger.debug(f"Status: {led_service.get_status()}, Temperature: {temperature}")
+        status = led_service.get_status()
+        temperature = led_service.get_temperature()
+        logger.info(f"Current LED status: {status}, Temperature: {temperature}")
         return render_template('index.html', 
-                             now=datetime.now(),
-                             status=led_service.get_status(),
-                             temperature=temperature)
+                             status=status,
+                             temperature=temperature,
+                             now=datetime.now())
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
-        return f"Error loading page: {str(e)}", 500
+        logger.error(f"Error in home route: {e}")
+        return render_template('index.html', 
+                             status="ERROR",
+                             temperature=0,
+                             now=datetime.now())
 
 @app.route('/light_on')
 def light_on():
     try:
         led_service.turn_on()
-        logger.info("LED turned ON")
         return redirect(url_for('home'))
     except Exception as e:
-        logger.error(f"Error turning light on: {str(e)}")
-        return f"Error controlling LED: {str(e)}", 500
+        logger.error(f"Error turning light on: {e}")
+        return redirect(url_for('home'))
 
 @app.route('/light_off')
 def light_off():
     try:
         led_service.turn_off()
-        logger.info("LED turned OFF")
         return redirect(url_for('home'))
     except Exception as e:
-        logger.error(f"Error turning light off: {str(e)}")
-        return f"Error controlling LED: {str(e)}", 500
+        logger.error(f"Error turning light off: {e}")
+        return redirect(url_for('home'))
 
 @app.route('/flash')
 def flash():
     try:
         led_service.flash()
-        logger.info("LED set to FLASH")
         return redirect(url_for('home'))
     except Exception as e:
-        logger.error(f"Error flashing LED: {str(e)}")
-        return f"Error controlling LED: {str(e)}", 500
+        logger.error(f"Error setting flash: {e}")
+        return redirect(url_for('home'))
 
 @app.route('/favicon.ico')
 def favicon():
@@ -128,11 +129,8 @@ def chat():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    logger.info("Starting Flask server...")
-    if Config.OPENAI_API_KEY:
-        openai.api_key = Config.OPENAI_API_KEY
-        logger.info("OpenAI API key configured")
-    else:
-        logger.warning("OpenAI API key not found - Chat features will be disabled")
-    
-    app.run(debug=Config.DEBUG, host='0.0.0.0', port=5001)
+    try:
+        logger.info("Starting Flask server on port 5001...")
+        app.run(host='0.0.0.0', port=5001, debug=True)
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")

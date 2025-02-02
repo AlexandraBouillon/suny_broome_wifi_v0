@@ -32,4 +32,4 @@ def get_ai_response(user_input, context=""):
         return f"Error: Invalid request - {str(e)}"
     except Exception as e:
         logger.error(f"Error getting AI response: {type(e).__name__}: {str(e)}")
-        return f"Error: {str(e)}"
+        return f"Error: {str(e)}" 
