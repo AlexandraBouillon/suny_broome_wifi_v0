@@ -351,9 +351,37 @@ input:focus + .slider {
 }
 
 /* Flash Button */
-.button.flash {
-    padding: 15px 30px;
-    font-size: 1rem;
+.flash-button {
+    width: 80px;
+    height: 140px;
+    border-radius: 70px;
+    background-color: #000000;
+    border: 2px solid #edb31f;
+    cursor: pointer;
+    font-size: 3rem;
+    color: #edb31f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+/* Hover and Active States */
+.flash-button:hover {
+    background-color: rgba(237, 179, 31, 0.1);
+}
+
+.flash-button:active {
+    background-color: #edb31f;
+    color: #000000;
+    transform: scale(0.95);
+}
+
+/* Focus state */
+.flash-button:focus {
+    outline: none;
+    box-shadow: 0 0 5px #edb31f;
 }
 
 /* Button Container */
