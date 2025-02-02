@@ -6,6 +6,9 @@ import os
 import re
 from dotenv import load_dotenv
 import openai
+from config import Config, logger
+from services.chat_service import get_ai_response
+from services.led_service import LEDService
 
 load_dotenv()
 
@@ -35,7 +38,7 @@ app = Flask(__name__,
 
 PICO_URL = os.getenv('PICO_URL', 'http://192.168.1.137')
 NGROK_URL = os.getenv('NGROK_URL')
-led_status = "OFF" 
+led_service = LEDService()
 
 # Configure OpenAI
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -64,48 +67,14 @@ def get_pico_temperature():
         logger.error(f"Error getting temperature: {e}")
         return 25.0
 
-def get_ai_response(user_input, context=""):
-    """Get a response from OpenAI for TJ"""
-    try:
-        if not CHAT_ENABLED:
-            return "Chat is currently disabled. Please configure the OpenAI API key."
-
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": f"You are TJ, an assistant for a Raspberry Pi Pico W LED Control Panel. {context}"
-                },
-                {
-                    "role": "user",
-                    "content": user_input
-                }
-            ]
-        )
-        return completion.choices[0].message['content']
-    except openai.error.RateLimitError:
-        logger.error("OpenAI API rate limit exceeded")
-        return "Error: API rate limit exceeded. Please try again later."
-    except openai.error.AuthenticationError:
-        logger.error("OpenAI API authentication failed")
-        return "Error: API authentication failed. Please check your API key."
-    except openai.error.InvalidRequestError as e:
-        logger.error(f"OpenAI API invalid request: {str(e)}")
-        return f"Error: Invalid request - {str(e)}"
-    except Exception as e:
-        logger.error(f"Error getting AI response: {type(e).__name__}: {str(e)}")
-        return f"Error: {str(e)}"
-
 @app.route('/')
-def index():
+def home():
     try:
-        global led_status
         temperature = get_pico_temperature()
-        logger.debug(f"Status: {led_status}, Temperature: {temperature}")
+        logger.debug(f"Status: {led_service.get_status()}, Temperature: {temperature}")
         return render_template('index.html', 
                              now=datetime.now(),
-                             status=led_status,
+                             status=led_service.get_status(),
                              temperature=temperature)
     except Exception as e:
         logger.error(f"Error: {str(e)}")
@@ -114,12 +83,9 @@ def index():
 @app.route('/light_on')
 def light_on():
     try:
-        global led_status
-        response = requests.get(f"{PICO_URL}/lighton")
-        if response.status_code == 200:
-            led_status = "ON"
-            logger.info("LED turned ON")
-        return redirect(url_for('index'))
+        led_service.turn_on()
+        logger.info("LED turned ON")
+        return redirect(url_for('home'))
     except Exception as e:
         logger.error(f"Error turning light on: {str(e)}")
         return f"Error controlling LED: {str(e)}", 500
@@ -127,12 +93,9 @@ def light_on():
 @app.route('/light_off')
 def light_off():
     try:
-        global led_status
-        response = requests.get(f"{PICO_URL}/lightoff")
-        if response.status_code == 200:
-            led_status = "OFF"
-            logger.info("LED turned OFF")
-        return redirect(url_for('index'))
+        led_service.turn_off()
+        logger.info("LED turned OFF")
+        return redirect(url_for('home'))
     except Exception as e:
         logger.error(f"Error turning light off: {str(e)}")
         return f"Error controlling LED: {str(e)}", 500
@@ -140,12 +103,9 @@ def light_off():
 @app.route('/flash')
 def flash():
     try:
-        global led_status
-        response = requests.get(f"{PICO_URL}/flash")
-        if response.status_code == 200:
-            led_status = "FLASH"
-            logger.info("LED set to FLASH")
-        return redirect(url_for('index'))
+        led_service.flash()
+        logger.info("LED set to FLASH")
+        return redirect(url_for('home'))
     except Exception as e:
         logger.error(f"Error flashing LED: {str(e)}")
         return f"Error controlling LED: {str(e)}", 500
@@ -160,9 +120,7 @@ def chat():
     try:
         data = request.get_json()
         user_input = data.get('text', '')
-        
         logger.info(f"Chat request received: {user_input[:50]}...")
-        
         response = get_ai_response(user_input)
         return jsonify({'reply': response})
     except Exception as e:
@@ -171,4 +129,10 @@ def chat():
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    if Config.OPENAI_API_KEY:
+        openai.api_key = Config.OPENAI_API_KEY
+        logger.info("OpenAI API key configured")
+    else:
+        logger.warning("OpenAI API key not found - Chat features will be disabled")
+    
+    app.run(debug=Config.DEBUG, host='0.0.0.0', port=5001)
