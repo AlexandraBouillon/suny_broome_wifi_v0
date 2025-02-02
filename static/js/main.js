@@ -2,7 +2,6 @@ let strobeAcknowledged = false;
 
 function sendMessage() {
     const userInput = document.getElementById('userInput');
-    const chatContainer = document.getElementById('chatContainer');
     const message = userInput.value.trim();
 
     if (!message) return;
@@ -13,14 +12,17 @@ function sendMessage() {
     fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({text: message})
+        body: JSON.stringify({ text: message })
     })
-    .then(response => response.json())
-    .then(data => appendMessage('assistant-message', data.reply))
-    .catch(error => {
-        console.error('Error:', error);
-        appendMessage('assistant-message error', `Error: ${error.message || error}`);
-    });
+        .then(response => {
+            if (!response.ok) throw new Error('Network response failed');
+            return response.json();
+        })
+        .then(data => appendMessage('assistant-message', data.reply))
+        .catch(error => {
+            console.error('Error:', error);
+            appendMessage('assistant-message error', `Error: ${error.message}`);
+        });
 }
 
 function appendMessage(className, text) {
@@ -48,11 +50,14 @@ function acknowledgeWarning() {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('userInput').addEventListener('keypress', e => {
+    const userInput = document.getElementById('userInput');
+    const ledToggle = document.getElementById('ledToggle');
+
+    userInput.addEventListener('keypress', e => {
         if (e.key === 'Enter') sendMessage();
     });
 
-    document.getElementById('ledToggle').addEventListener('change', function() {
-        window.location.href = this.checked ? '/light_on' : '/light_off';
+    ledToggle.addEventListener('change', () => {
+        window.location.href = ledToggle.checked ? '/light_on' : '/light_off';
     });
 }); 

@@ -4,22 +4,28 @@ function log(message, error = false) {
     console.log(`%c[PIXI Debug] ${message}`, style);
 }
 
-// LED configuration
+// Improved LED configuration with better organization
 const LED_CONFIG = {
     count: 50,
-    baseSize: 20,
-    sizeVariation: 15,
+    appearance: {
+        baseSize: 20,
+        sizeVariation: 15,
+        glowIntensity: 25,
+        blurQuality: 1,
+        blurAmount: 15
+    },
     colors: {
         blue: 0x3498db,
         red: 0xe74c3c,
         green: 0x2ecc71,
-        gold: 0xedb31f
+        gold: 0xedb31f,
+        strobe: [0xFFFFFF, 0x000000]
     },
-    strobeColors: [0xFFFFFF, 0x000000],
-    strobeSpeed: 100,
-    animationSpeed: 0.06,
-    statusCheckInterval: 500,
-    glowIntensity: 25
+    animation: {
+        speed: 0.06,
+        statusCheckInterval: 500,
+        strobeSpeed: 100
+    }
 };
 // State tracking
 let currentStatus = '';
@@ -104,52 +110,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Create LED array
         const leds = [];
         for (let i = 0; i < LED_CONFIG.count; i++) {
-            const led = new PIXI.Graphics();
-            const size = LED_CONFIG.baseSize + Math.random() * LED_CONFIG.sizeVariation;
-
-            led.beginFill(0xedb31f);
-            led.drawCircle(0, 0, size);
-            led.endFill();
-
-            led.x = Math.random() * app.screen.width;
-            led.y = Math.random() * app.screen.height;
-
-            const blurFilter = new PIXI.BlurFilter();
-            blurFilter.blur = 15;
-            blurFilter.quality = 1;
-            led.filters = [blurFilter];
-
-            app.stage.addChild(led);
-            leds.push({
-                graphic: led,
-                filter: blurFilter,
-                speed: 0.8 + Math.random() * 0.7,
-                phase: Math.random() * Math.PI * 2,
-                velocityX: (Math.random() - 0.5) * 2,
-                velocityY: (Math.random() - 0.5) * 2
-            });
+            const led = createLED(app);
+            app.stage.addChild(led.graphic);
+            leds.push(led);
         }
         log('LEDs created');
 
         // Color cycle function
+        function cycleLEDColors(led, time) {
+            const r = Math.min(255, Math.floor(Math.sin(time + led.phase) * 127 + 178));
+            const g = Math.min(255, Math.floor(Math.sin(time + led.phase + 2) * 127 + 178));
+            const b = Math.min(255, Math.floor(Math.sin(time + led.phase + 4) * 127 + 178));
+            const color = (r << 16) | (g << 8) | b;
 
-function cycleLEDColors(led, index, time) {
-    // Ensure color values stay within valid range (0-255)
-    const r = Math.min(255, Math.floor(Math.sin(time + led.phase) * 127 + 178));
-    const g = Math.min(255, Math.floor(Math.sin(time + led.phase + 2) * 127 + 178));
-    const b = Math.min(255, Math.floor(Math.sin(time + led.phase + 4) * 127 + 178));
+            led.graphic.clear()
+                .beginFill(color)
+                .drawCircle(0, 0, LED_CONFIG.appearance.baseSize)
+                .endFill();
 
-    // Convert to hex color
-    const color = (r << 16) | (g << 8) | b;
-
-    led.graphic.clear();
-    led.graphic.beginFill(color);
-    led.graphic.drawCircle(0, 0, LED_CONFIG.baseSize);
-    led.graphic.endFill();
-
-    // Update glow effect
-    led.filter.blur = LED_CONFIG.glowIntensity + Math.sin(time) * 8;
-}
+            led.filter.blur = LED_CONFIG.appearance.glowIntensity + Math.sin(time) * 8;
+        }
 
         function startStrobe() {
             if (isStrobing) return;
@@ -159,17 +139,17 @@ function cycleLEDColors(led, index, time) {
             strobeIndex = 0;
 
             strobeInterval = setInterval(() => {
-                const color = LED_CONFIG.strobeColors[strobeIndex % 2];
+                const color = LED_CONFIG.colors.strobe[strobeIndex % 2];
                 leds.forEach(led => {
                     led.graphic.clear();
                     led.graphic.beginFill(color);
-                    led.graphic.drawCircle(0, 0, LED_CONFIG.baseSize);
+                    led.graphic.drawCircle(0, 0, LED_CONFIG.appearance.baseSize);
                     led.graphic.endFill();
                     led.graphic.alpha = 1;
                 });
                 log(`Strobe pulse: ${strobeIndex % 2 ? 'OFF' : 'ON'}`);
                 strobeIndex++;
-            }, LED_CONFIG.strobeSpeed);
+            }, LED_CONFIG.animation.strobeSpeed);
         }
 
         function stopStrobe() {
@@ -181,7 +161,7 @@ function cycleLEDColors(led, index, time) {
 
             leds.forEach(led => {
                 led.graphic.scale.set(1);
-                led.filter.blur = 15;
+                led.filter.blur = LED_CONFIG.appearance.blurAmount;
             });
         }
 
@@ -189,7 +169,7 @@ function cycleLEDColors(led, index, time) {
         app.ticker.add(() => {
             const now = Date.now();
 
-            if (now - lastStatusCheck >= LED_CONFIG.statusCheckInterval) {
+            if (now - lastStatusCheck >= LED_CONFIG.animation.statusCheckInterval) {
                 const statusElement = document.querySelector('.status');
                 if (statusElement) {
                     const newStatus = statusElement.textContent.trim();
@@ -212,9 +192,9 @@ function cycleLEDColors(led, index, time) {
             if (currentStatus.includes('FLASH')) {
                 // Strobe effect is handled by interval
             } else if (currentStatus.includes('ON')) {
-                time += LED_CONFIG.animationSpeed;
+                time += LED_CONFIG.animation.speed;
                 leds.forEach((led, index) => {
-                    cycleLEDColors(led, index, time * led.speed);
+                    cycleLEDColors(led, time * led.speed);
                     updateLEDPosition(led, app.screen.width, app.screen.height);
                     led.graphic.alpha = 1;
                 });
@@ -277,4 +257,30 @@ function updateLEDPosition(led, width, height) {
     } catch (error) {
         log(`Error updating LED position: ${error.message}`, true);
     }
+}
+
+function createLED(app) {
+    const size = LED_CONFIG.appearance.baseSize + Math.random() * LED_CONFIG.appearance.sizeVariation;
+    const led = new PIXI.Graphics();
+    
+    led.beginFill(LED_CONFIG.colors.gold);
+    led.drawCircle(0, 0, size);
+    led.endFill();
+    
+    led.x = Math.random() * app.screen.width;
+    led.y = Math.random() * app.screen.height;
+    
+    const blurFilter = new PIXI.BlurFilter();
+    blurFilter.blur = LED_CONFIG.appearance.blurAmount;
+    blurFilter.quality = LED_CONFIG.appearance.blurQuality;
+    led.filters = [blurFilter];
+    
+    return {
+        graphic: led,
+        filter: blurFilter,
+        speed: 0.8 + Math.random() * 0.7,
+        phase: Math.random() * Math.PI * 2,
+        velocityX: (Math.random() - 0.5) * 2,
+        velocityY: (Math.random() - 0.5) * 2
+    };
 }
