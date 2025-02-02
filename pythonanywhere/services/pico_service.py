@@ -1,6 +1,7 @@
 import requests
 import urllib3
 import os
+import re
 from config import Config, logger
 
 # Disable SSL warnings
@@ -8,9 +9,11 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class PicoService:
     def __init__(self):
+        self.status = "OFF"
+        self.temperature = 0
         self.headers = {
             'User-Agent': 'Mozilla/5.0',
-            'Accept': '*/*',  # Accept any content type
+            'Accept': '*/*',
             'ngrok-skip-browser-warning': 'true'
         }
     
@@ -22,47 +25,71 @@ class PicoService:
             return None
         return url.rstrip('/')
     
+    def _parse_response(self, html_content):
+        """Parse LED status and temperature from the HTML response"""
+        try:
+            # Look for LED Status in the status div
+            status_match = re.search(r'<div class="status">LED Status: ([A-Z]+)</div>', html_content)
+            if status_match:
+                self.status = status_match.group(1)
+                logger.info(f"Found LED status: {self.status}")
+            
+            # Look for Temperature in the temperature div
+            temp_match = re.search(r'<div class="temperature">Temperature: ([\d.]+)°C</div>', html_content)
+            if temp_match:
+                self.temperature = float(temp_match.group(1))
+                logger.info(f"Found temperature: {self.temperature}")
+                
+            return True
+        except Exception as e:
+            logger.error(f"Error parsing HTML: {e}")
+            return False
+    
     def make_request(self, endpoint, description="Request"):
-        """Make a request to the Pico with standard headers and logging"""
+        """Make a request to the Pico via ngrok"""
         try:
             if not self.pico_url:
                 logger.error("No NGROK_URL configured")
-                return type('Response', (), {'text': 'OFF', 'status_code': 200})()
+                return type('Response', (), {'text': 'OFF', 'status_code': 200, 'temperature': 0})()
                 
-            url = f"{self.pico_url}/{endpoint.lstrip('/')}"
+            url = f"{self.pico_url}/{endpoint}"
             logger.info("\n" + "=" * 50)
-            logger.info(f"Making {description}")
-            logger.info(f"URL: {url}")
+            logger.info(f"Making {description} to URL: {url}")
             
             try:
-                # Make request and get full response details
                 response = requests.get(url, headers=self.headers, verify=False, timeout=5)
-                
                 logger.info(f"Response Status: {response.status_code}")
-                logger.info(f"Response Headers: {dict(response.headers)}")
-                logger.info(f"Response Content Type: {response.headers.get('content-type', 'unknown')}")
-                logger.info(f"Response Text: {response.text[:200]}")  # First 200 chars
-                logger.info(f"Response Length: {len(response.text)}")
                 
-                if response.status_code == 400:
-                    # Try to get error details
-                    try:
-                        error_details = response.json()
-                        logger.error(f"Error details: {error_details}")
-                    except:
-                        logger.error("Could not parse error response as JSON")
+                if response.status_code == 200:
+                    # Set initial status based on endpoint
+                    if endpoint == 'light_on':
+                        self.status = "ON"
+                    elif endpoint == 'light_off':
+                        self.status = "OFF"
+                    elif endpoint == 'flash':
+                        self.status = "FLASH"
                     
-                    return type('Response', (), {'text': 'OFF', 'status_code': 200})()
+                    # Parse the response HTML
+                    self._parse_response(response.text)
+                    logger.info(f"Final values - Status: {self.status}, Temperature: {self.temperature}")
+                    
+                    # Return custom response object
+                    return type('Response', (), {
+                        'text': self.status,
+                        'status_code': 200,
+                        'temperature': self.temperature
+                    })()
                 
-                return response
+                logger.error(f"Bad response status: {response.status_code}")
+                return type('Response', (), {'text': 'OFF', 'status_code': response.status_code, 'temperature': 0})()
                 
-            except requests.exceptions.ConnectionError as e:
-                logger.error(f"Connection error: {str(e)}")
-                return type('Response', (), {'text': 'OFF', 'status_code': 200})()
+            except requests.exceptions.ConnectionError:
+                logger.error("Connection failed - Check if ngrok tunnel is active")
+                return type('Response', (), {'text': 'OFF', 'status_code': 200, 'temperature': 0})()
             except requests.exceptions.Timeout:
-                logger.error(f"Request timed out after 5 seconds")
-                return type('Response', (), {'text': 'OFF', 'status_code': 200})()
+                logger.error("Request timed out")
+                return type('Response', (), {'text': 'OFF', 'status_code': 200, 'temperature': 0})()
                 
         except Exception as e:
-            logger.error(f"Unexpected error: {type(e).__name__}: {str(e)}")
-            return type('Response', (), {'text': 'OFF', 'status_code': 200})() 
+            logger.error(f"Error in {description}: {type(e).__name__}: {str(e)}")
+            return type('Response', (), {'text': 'OFF', 'status_code': 200, 'temperature': 0})() 
