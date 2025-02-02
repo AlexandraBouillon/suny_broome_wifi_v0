@@ -97,6 +97,112 @@ body {
     background-color: transparent;
 }
 
+/* Container for status and controls */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Status Display */
+.status-item {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 20px;
+    padding: 15px 20px;
+    border: 1px solid var(--suny-gold);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(5px);
+}
+
+.status,
+.temperature {
+    color: white;
+    text-shadow: 0 0 5px var(--suny-gold);
+    font-size: 1.2rem;
+}
+
+/* Controls Container */
+.controls-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    padding: 20px 0;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 90px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #000000;
+    border: 2px solid var(--suny-gold);
+    border-radius: 25px;
+    transition: var(--transition-speed);
+}
+
+.slider:before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 6px;
+    width: 38px;
+    height: 38px;
+    background-color: var(--suny-gold);
+    border-radius: 50%;
+    transition: transform var(--transition-speed) ease;
+}
+
+input:checked + .slider:before {
+    transform: translate(-50%, -40px);
+}
+
+/* Flash Button - match toggle dimensions */
+.flash-button {
+    width: 50px;
+    height: 90px;
+    border-radius: 25px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--suny-gold);
+    background-color: #000000;
+    color: var(--suny-gold);
+    transition: var(--transition-speed);
+    flex-shrink: 0;
+}
+
 /* Container styles */
 .container {
     background-color: #000;
@@ -244,110 +350,6 @@ h1 {
     animation: none;
 }
 
-/* Status Container */
-.status-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 30px;
-}
-
-.status-item {
-    font-size: 1rem;
-    padding: 20px 30px;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--suny-gold);
-    text-align: center;
-}
-
-.status-item .status,
-.status-item .temperature {
-    margin: 10px 0;
-}
-
-/* Controls Container */
-.controls-container {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    width: 100%;
-    padding: 20px 0;
-}
-
-/* Toggle Switch */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 100px;  /* Taller height for vertical toggle */
-    flex-shrink: 0;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #000000;
-    transition: .4s;
-    border: 2px solid var(--suny-gold);
-    border-radius: 50px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 46px;
-    width: 46px;
-    left: 5px;
-    bottom: 5px;  /* Start at bottom by default */
-    background-color: var(--suny-gold);
-    transition: .4s;
-    border-radius: 50%;
-}
-
-/* Move to top when checked */
-input:checked + .slider:before {
-    transform: translateY(-44px);
-}
-
-/* Flash Button */
-.flash-button {
-    padding: 10px;
-    white-space: nowrap;
-    flex-shrink: 0;
-    width: 60px;
-    height: 100px;  /* Match toggle height */
-    border-radius: 50px;  /* Match toggle roundness */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid var(--suny-gold);
-    background-color: #000000;
-    color: var(--suny-gold);
-    transition: .4s;
-}
-
-.flash-button:hover {
-    background-color: var(--suny-gold);
-    color: #000000;
-}
-
-.flash-button h1 {
-    font-size: 2rem;
-    margin: 0;
-}
-
 /* Button Container */
 .button-container {
     display: flex;
@@ -465,7 +467,7 @@ footer a:hover {
     transform: translateY(-2px);
 }
 
-/* Responsive Design */
+/* Main Content Responsive Adjustments */
 @media (max-width: 768px) {
     .main-content {
         padding: 60px 10px;
@@ -477,10 +479,6 @@ footer a:hover {
         margin: 10px;
     }
 
-    .controls-container {
-        flex-direction: column;
-    }
-
     .button {
         min-width: 100px;
         padding: 12px 20px;
@@ -488,39 +486,14 @@ footer a:hover {
     }
 }
 
-/* Update text colors for better visibility on black background */
-.status, .temperature {
-    color: white;
-    text-shadow: 0 0 5px var(--suny-gold);
-}
-
-/* Mobile adjustments */
+/* Small Screen Adjustments */
 @media screen and (max-width: 480px) {
     .controls-container {
         gap: 20px;
-        padding: 15px 0;
     }
 
-    .switch {
-        width: 50px;
-        height: 90px;  /* Slightly smaller but maintain proportion */
-    }
-
-    .slider:before {
-        bottom: 5px;  /* Start at bottom by default */
-    }
-
-    input:checked + .slider:before {
-        transform: translateY(-40px);  /* Slightly smaller movement for mobile */
-    }
-
-    .flash-button {
-        width: 50px;
-        height: 90px;  /* Match toggle height */
-        border-radius: 45px;
-    }
-
-    .flash-button h1 {
-        font-size: 1.75rem;
+    .status-item {
+        max-width: 260px;
+        padding: 12px 15px;
     }
 }
