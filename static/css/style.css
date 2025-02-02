@@ -110,7 +110,7 @@ body {
     flex-direction: column;  
     align-items: center; 
     justify-content: center; 
-    gap: 10px;  
+    gap: 10px;
     background-color: transparent;
 }
 
@@ -158,7 +158,7 @@ h1 {
     border: 2px solid transparent;
     max-width: 400px;  
     min-width: 250px;   
-    margin: 20px auto;
+    margin: 10px auto;
     transition: transform var(--transition-speed), 
                 border-color var(--transition-speed),
                 box-shadow var(--transition-speed);
@@ -246,6 +246,7 @@ h1 {
     padding: 15px;
     gap: 20px;   
     animation: none;
+    margin-bottom: 10px;
 }
 
 /* Panel Title */
