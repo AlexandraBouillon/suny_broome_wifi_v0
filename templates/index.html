@@ -102,9 +102,10 @@
                 .catch(error => {
                     console.error('Error:', error);
                     const errorDiv = document.createElement('div');
-                    errorDiv.className = 'message assistant-message';
-                    errorDiv.textContent = 'Sorry, I encountered an error. Please try again.';
+                    errorDiv.className = 'message assistant-message error';
+                    errorDiv.textContent = `Error: ${error.message || error}`;
                     chatContainer.appendChild(errorDiv);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
                 });
             }
         }

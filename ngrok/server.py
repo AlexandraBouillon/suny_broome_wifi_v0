@@ -5,6 +5,7 @@ import requests
 import os
 import re
 from dotenv import load_dotenv
+import openai
 
 load_dotenv()
 
@@ -36,6 +37,16 @@ PICO_URL = os.getenv('PICO_URL', 'http://192.168.1.137')
 NGROK_URL = os.getenv('NGROK_URL')
 led_status = "OFF" 
 
+# Configure OpenAI
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+if OPENAI_API_KEY:
+    openai.api_key = OPENAI_API_KEY
+    CHAT_ENABLED = True
+    logger.info("OpenAI API key configured")
+else:
+    CHAT_ENABLED = False
+    logger.warning("OpenAI API key not found - Chat features will be disabled")
+
 def get_pico_temperature():
     try:
         response = requests.get(PICO_URL)
@@ -52,6 +63,39 @@ def get_pico_temperature():
     except Exception as e:
         logger.error(f"Error getting temperature: {e}")
         return 25.0
+
+def get_ai_response(user_input, context=""):
+    """Get a response from OpenAI for TJ"""
+    try:
+        if not CHAT_ENABLED:
+            return "Chat is currently disabled. Please configure the OpenAI API key."
+
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"You are TJ, an assistant for a Raspberry Pi Pico W LED Control Panel. {context}"
+                },
+                {
+                    "role": "user",
+                    "content": user_input
+                }
+            ]
+        )
+        return completion.choices[0].message['content']
+    except openai.error.RateLimitError:
+        logger.error("OpenAI API rate limit exceeded")
+        return "Error: API rate limit exceeded. Please try again later."
+    except openai.error.AuthenticationError:
+        logger.error("OpenAI API authentication failed")
+        return "Error: API authentication failed. Please check your API key."
+    except openai.error.InvalidRequestError as e:
+        logger.error(f"OpenAI API invalid request: {str(e)}")
+        return f"Error: Invalid request - {str(e)}"
+    except Exception as e:
+        logger.error(f"Error getting AI response: {type(e).__name__}: {str(e)}")
+        return f"Error: {str(e)}"
 
 @app.route('/')
 def index():
@@ -110,6 +154,20 @@ def flash():
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
                              'favicon.ico', mimetype='image/x-icon')
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    try:
+        data = request.get_json()
+        user_input = data.get('text', '')
+        
+        logger.info(f"Chat request received: {user_input[:50]}...")
+        
+        response = get_ai_response(user_input)
+        return jsonify({'reply': response})
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
