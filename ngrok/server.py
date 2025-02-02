@@ -6,26 +6,41 @@ import os
 import re
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+current_dir = os.path.dirname(os.path.abspath(__file__))   
+PROJECT_ROOT = os.path.dirname(current_dir)  
 
-# Get URLs from environment variables
+
+template_dir = os.path.join(PROJECT_ROOT, 'templates')
+static_dir = os.path.join(PROJECT_ROOT, 'static')
+
+logger.info(f"Current directory: {current_dir}")
+logger.info(f"Project root: {PROJECT_ROOT}")
+logger.info(f"Template directory: {template_dir}")
+logger.info(f"Static directory: {static_dir}")
+
+if not os.path.exists(template_dir):
+    raise FileNotFoundError(f"Template directory not found at: {template_dir}")
+if not os.path.exists(static_dir):
+    raise FileNotFoundError(f"Static directory not found at: {static_dir}")
+
+app = Flask(__name__, 
+           template_folder=template_dir,
+           static_folder=static_dir)
+
 PICO_URL = os.getenv('PICO_URL', 'http://192.168.1.137')
 NGROK_URL = os.getenv('NGROK_URL')
-led_status = "OFF"  # Track LED status
+led_status = "OFF" 
 
 def get_pico_temperature():
     try:
         response = requests.get(PICO_URL)
         content = response.text
         
-        # Match the exact format from Pico: "Temperature is 30.78955"
         temp_match = re.search(r'Temperature is ([\d.]+)', content)
         if temp_match:
             temp = float(temp_match.group(1))
@@ -56,7 +71,6 @@ def index():
 def light_on():
     try:
         global led_status
-        # Changed to match Pico's endpoint
         response = requests.get(f"{PICO_URL}/lighton")
         if response.status_code == 200:
             led_status = "ON"
@@ -70,7 +84,6 @@ def light_on():
 def light_off():
     try:
         global led_status
-        # Changed to match Pico's endpoint
         response = requests.get(f"{PICO_URL}/lightoff")
         if response.status_code == 200:
             led_status = "OFF"

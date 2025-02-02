@@ -97,19 +97,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         for (let i = 0; i < LED_CONFIG.count; i++) {
             const led = new PIXI.Graphics();
             const size = LED_CONFIG.baseSize + Math.random() * LED_CONFIG.sizeVariation;
-            
+
             led.beginFill(0xedb31f);
             led.drawCircle(0, 0, size);
             led.endFill();
-            
+
             led.x = Math.random() * app.screen.width;
             led.y = Math.random() * app.screen.height;
-            
+
             const blurFilter = new PIXI.BlurFilter();
             blurFilter.blur = 15;
             blurFilter.quality = 1;
             led.filters = [blurFilter];
-            
+
             app.stage.addChild(led);
             leds.push({
                 graphic: led,
@@ -123,32 +123,32 @@ document.addEventListener('DOMContentLoaded', async function() {
         log('LEDs created');
 
         // Color cycle function
-       
+
 function cycleLEDColors(led, index, time) {
     // Ensure color values stay within valid range (0-255)
     const r = Math.min(255, Math.floor(Math.sin(time + led.phase) * 127 + 178));
     const g = Math.min(255, Math.floor(Math.sin(time + led.phase + 2) * 127 + 178));
     const b = Math.min(255, Math.floor(Math.sin(time + led.phase + 4) * 127 + 178));
-    
+
     // Convert to hex color
     const color = (r << 16) | (g << 8) | b;
-    
+
     led.graphic.clear();
     led.graphic.beginFill(color);
     led.graphic.drawCircle(0, 0, LED_CONFIG.baseSize);
     led.graphic.endFill();
-    
+
     // Update glow effect
     led.filter.blur = LED_CONFIG.glowIntensity + Math.sin(time) * 8;
 }
 
         function startStrobe() {
             if (isStrobing) return;
-            
+
             log('Starting strobe effect');
             isStrobing = true;
             strobeIndex = 0;
-            
+
             strobeInterval = setInterval(() => {
                 const color = LED_CONFIG.strobeColors[strobeIndex % 2];
                 leds.forEach(led => {
@@ -165,11 +165,11 @@ function cycleLEDColors(led, index, time) {
 
         function stopStrobe() {
             if (!isStrobing) return;
-            
+
             log('Stopping strobe effect');
             isStrobing = false;
             clearInterval(strobeInterval);
-            
+
             leds.forEach(led => {
                 led.graphic.scale.set(1);
                 led.filter.blur = 15;
@@ -179,16 +179,16 @@ function cycleLEDColors(led, index, time) {
         // Main animation loop with throttled status checking
         app.ticker.add(() => {
             const now = Date.now();
-            
+
             if (now - lastStatusCheck >= LED_CONFIG.statusCheckInterval) {
                 const statusElement = document.querySelector('.status');
                 if (statusElement) {
                     const newStatus = statusElement.textContent.trim();
-                    
+
                     if (newStatus !== currentStatus) {
                         log('Status changed to: ' + newStatus);
                         currentStatus = newStatus;
-                        
+
                         if (newStatus.includes('FLASH')) {
                             if (!isStrobing) startStrobe();
                         } else {
@@ -249,16 +249,16 @@ function updateLEDPosition(led, width, height) {
     try {
         led.graphic.x += led.velocityX * 1.5;
         led.graphic.y += led.velocityY * 1.5;
-        
+
         led.graphic.x += Math.sin(time * led.speed) * 3;
         led.graphic.y += Math.cos(time * led.speed) * 3;
-        
+
         // Boundary checking
         if (led.graphic.x < 0) led.graphic.x = 0;
         if (led.graphic.x > width) led.graphic.x = width;
         if (led.graphic.y < 0) led.graphic.y = 0;
         if (led.graphic.y > height) led.graphic.y = height;
-        
+
         if (led.graphic.x <= 0 || led.graphic.x >= width) {
             led.velocityX *= -1;
         }

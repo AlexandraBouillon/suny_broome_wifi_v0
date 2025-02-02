@@ -4,7 +4,7 @@ import machine
 import network
 import socket
 
-# Import credentials - will fail if config.py is missing
+# Import from local config.py
 from config import WIFI_SSID, WIFI_PASSWORD
 
 def wifi_connect():

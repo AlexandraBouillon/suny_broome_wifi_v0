@@ -1,6 +1,7 @@
 mise
 # Credentials and configs
 config.py
+pico_config.py
 **/config.py
 
 # Python
@@ -24,3 +25,4 @@ config/secrets.py
 *.pem
 __pycache__/
 config/secrets.py
+mise/
