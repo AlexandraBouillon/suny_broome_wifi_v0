@@ -221,7 +221,7 @@ h1 {
 .chat-input-container {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 18px;
     padding: 8px 0;
     width: 100%;   
 }
