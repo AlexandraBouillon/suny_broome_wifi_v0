@@ -28,21 +28,35 @@ class PicoService:
     def _parse_response(self, html_content):
         """Parse LED status and temperature from the HTML response"""
         try:
-            # Look for LED Status in the status div
+            # Log the raw HTML content first
+            logger.debug(f"Raw HTML response: {html_content}")
+            
+            # Look for LED Status - updated pattern for div
             status_match = re.search(r'<div class="status">LED Status: ([A-Z]+)</div>', html_content)
             if status_match:
                 self.status = status_match.group(1)
                 logger.info(f"Found LED status: {self.status}")
+            else:
+                logger.error("LED status pattern not found")
+                logger.debug(f"Response content: {html_content}")
             
-            # Look for Temperature in the temperature div
-            temp_match = re.search(r'<div class="temperature">Temperature: ([\d.]+)°C</div>', html_content)
+            # Look for Temperature - updated pattern for div
+            temp_match = re.search(r'<div class="temperature">Temperature: ([\d.]+)', html_content)
             if temp_match:
-                self.temperature = float(temp_match.group(1))
-                logger.info(f"Found temperature: {self.temperature}")
-                
+                try:
+                    self.temperature = float(temp_match.group(1))
+                    logger.info(f"Found temperature: {self.temperature}")
+                except ValueError as e:
+                    logger.error(f"Error converting temperature to float: {e}")
+                    self.temperature = 0
+            else:
+                logger.error("Temperature pattern not found in response")
+                logger.debug(f"Response content: {html_content}")
+            
             return True
         except Exception as e:
             logger.error(f"Error parsing HTML: {e}")
+            logger.debug(f"Response content: {html_content}")
             return False
     
     def make_request(self, endpoint, description="Request"):
@@ -59,6 +73,7 @@ class PicoService:
             try:
                 response = requests.get(url, headers=self.headers, verify=False, timeout=5)
                 logger.info(f"Response Status: {response.status_code}")
+                logger.info(f"Raw Response Content: {response.text}")  # Log the raw response
                 
                 if response.status_code == 200:
                     # Set initial status based on endpoint
