@@ -33,20 +33,29 @@ function handleFlash() {
     // Show warning dialog first
     if (confirm("⚠️ WARNING: This animation contains flashing lights that may trigger seizures in people with photosensitive epilepsy.")) {
         log('Flash button clicked - warning accepted');
+        
+        // Update status and start animation immediately
+        const statusElement = document.querySelector('.status');
+        if (statusElement) {
+            statusElement.textContent = 'LED Status: FLASH';
+            currentStatus = 'FLASH';
+            log('Status updated to FLASH');
+        }
+
+        // Make the API request after updating UI
         fetch('/flash')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                const statusElement = document.querySelector('.status');
-                if (statusElement) {
-                    statusElement.textContent = 'LED Status: FLASH';
-                    currentStatus = 'FLASH';
-                    log('Status updated to FLASH');
-                }
             })
             .catch(error => {
                 log(`Error in flash handler: ${error}`, true);
+                // Optionally revert the status if the request failed
+                if (statusElement) {
+                    statusElement.textContent = 'LED Status: OFF';
+                    currentStatus = 'OFF';
+                }
             });
     } else {
         log('Flash cancelled - warning declined');
