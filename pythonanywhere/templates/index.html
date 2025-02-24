@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SUNY Broome LED Control Panel for Raspberry Pi Pico W">
+    <meta name="description" content="SUNY Broome Smart Building Management System: IoT Sensor Network with Machine Learning Optimization">
     <title>Alexandra Bouillon</title>
     <!-- Add both formats for better browser support -->
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://pixijs.download/v8.0.0/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
 </head>
 <body>
     <div id="strobeWarning" class="modal">
@@ -29,13 +30,13 @@
 
     <div id="pixiContainer" class="background-container"></div>
 
-    <div class="main-content">
-        <div class="container">
-            <div class="status-item">
+    <div class="main-container">
+        <div class="led-panel">
+            <div class="status-display">
                 <div class="status">LED Status: {{ status }}</div>
                 <div class="temperature">Temperature: {{ temperature }}°C</div>
             </div>
-            <div class="controls-container">
+            <div class="led-controls">
                 <label class="switch">
                     <input type="checkbox" id="ledToggle" {% if status == 'ON' %}checked{% endif %}>
                     <span class="slider round"></span>
@@ -45,21 +46,24 @@
                 </button>
             </div>
         </div>
-
-        <div class="chat-panel">
-            <div class="chat-title">
-                <img src="{{ url_for('static', filename='images/Machine_Learning_Analyst.png') }}" alt="AI Avatar" class="ai-avatar">
+        
+        <div class="chat-container">
+            <div class="chat-header">
+                <img src="{{ url_for('static', filename='images/Machine_Learning_Analyst.png') }}" alt="AI Icon">
                 <h2>Machine Learning Analyst</h2>
             </div>
-            <div class="chat-container" id="chatMessages"></div>
-            <form id="chatForm" class="chat-input-container">
-                <div class="input-wrapper">
-                    <input type="text" id="chatInput" class="chat-input" placeholder="Ask about the LED system...">
-                </div>
-                <div class="button-wrapper">
-                    <button type="submit" class="send-button button chat">Chat with the Machine Learning Analyst</button>
-                </div>
-            </form>
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will appear here -->
+            </div>
+            <div id="visualizationContainer" class="visualization-container">
+                <!-- Charts will appear here -->
+            </div>
+            <div class="chat-input-container">
+                <form id="chatForm">
+                    <input type="text" id="chatInput" placeholder="Ask about the LED system...">
+                    <button type="submit" class="chat-button">Chat</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -69,5 +73,13 @@
 
     <script src="{{ url_for('static', filename='js/animation.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        window.addEventListener('load', function() {
+            console.log('Page loaded, Chart.js status:', typeof Chart !== 'undefined');
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded properly!');
+            }
+        });
+    </script>
 </body>
 </html>

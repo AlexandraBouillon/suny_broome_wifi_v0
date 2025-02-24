@@ -1,63 +1,124 @@
-let strobeAcknowledged = false;
-
-function sendMessage() {
+document.addEventListener('DOMContentLoaded', function() {
+    const ledToggle = document.getElementById('ledToggle');
+    const statusDiv = document.querySelector('.status');
+    const animationContainer = document.getElementById('pixiContainer');
+    const chatContainer = document.getElementById('chatContainer');
     const userInput = document.getElementById('userInput');
-    const message = userInput.value.trim();
 
-    if (!message) return;
+    // Initialize states
+    let isAnimating = false;
+    let flashTimeout = null;
+    let strobeAcknowledged = false;
 
-    appendMessage('user-message', message);
-    userInput.value = '';
+    // LED Toggle functionality
+    ledToggle.addEventListener('change', function() {
+        const url = this.checked ? '/light_on' : '/light_off';
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                toggleAnimation(this.checked);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !this.checked; // Revert toggle if request failed
+            });
+    });
 
-    fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: message })
-    })
-        .then(response => {
-            if (!response.ok) throw new Error('Network response failed');
-            return response.json();
+    // Animation functions
+    function toggleAnimation(isOn) {
+        isAnimating = isOn;
+        if (isOn) {
+            startAnimation();
+        } else {
+            stopAnimation();
+        }
+    }
+
+    // Chat functionality
+    function addMessage(message, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = isUser ? 'user-message' : 'ai-message';
+        messageDiv.textContent = message;
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    window.sendMessage = function() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        userInput.value = '';
+
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text: message })
         })
-        .then(data => appendMessage('assistant-message', data.reply))
+        .then(response => response.json())
+        .then(data => {
+            addMessage(data.reply);
+        })
         .catch(error => {
             console.error('Error:', error);
-            appendMessage('assistant-message error', `Error: ${error.message}`);
+            addMessage('Sorry, I encountered an error processing your request.');
         });
-}
+    };
 
-function appendMessage(className, text) {
-    const chatContainer = document.getElementById('chatContainer');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${className}`;
-    messageDiv.textContent = text;
-    chatContainer.appendChild(messageDiv);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-}
+    // Strobe warning functionality
+    window.confirmStrobe = function() {
+        if (!strobeAcknowledged) {
+            document.getElementById('strobeWarning').style.display = 'flex';
+            return false;
+        }
+        return true;
+    };
 
-function confirmStrobe() {
-    if (!strobeAcknowledged) {
-        document.getElementById('strobeWarning').style.display = 'flex';
-        return false;
+    window.acknowledgeWarning = function() {
+        strobeAcknowledged = true;
+        document.getElementById('strobeWarning').style.display = 'none';
+        handleFlash();
+    };
+
+    // Flash button functionality
+    window.handleFlash = function() {
+        if (!confirmStrobe()) return;
+
+        fetch('/flash')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                executeFlashAnimation();
+            })
+            .catch(error => console.error('Error:', error));
+    };
+
+    function executeFlashAnimation() {
+        if (flashTimeout) {
+            clearTimeout(flashTimeout);
+        }
+        
+        const originalState = ledToggle.checked;
+        ledToggle.checked = false;
+        toggleAnimation(false);
+        
+        flashTimeout = setTimeout(() => {
+            ledToggle.checked = originalState;
+            toggleAnimation(originalState);
+            flashTimeout = null;
+        }, 500);
     }
-    return true;
-}
 
-function acknowledgeWarning() {
-    strobeAcknowledged = true;
-    document.getElementById('strobeWarning').style.display = 'none';
-    document.querySelector('.flash-button').click();
-}
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
-    const userInput = document.getElementById('userInput');
-    const ledToggle = document.getElementById('ledToggle');
-
-    userInput.addEventListener('keypress', e => {
-        if (e.key === 'Enter') sendMessage();
+    // Event listeners
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            window.sendMessage();
+        }
     });
 
-    ledToggle.addEventListener('change', () => {
-        window.location.href = ledToggle.checked ? '/light_on' : '/light_off';
-    });
+    // Initialize state based on server status
+    const currentStatus = statusDiv.textContent.includes('ON');
+    ledToggle.checked = currentStatus;
+    toggleAnimation(currentStatus);
 }); 
