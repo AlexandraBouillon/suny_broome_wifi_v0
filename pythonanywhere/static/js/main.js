@@ -446,17 +446,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Enhanced message display
-    function addMessage(text, isUser = false) {
-        debugLog(`Adding message: ${text} (isUser: ${isUser})`);
+    function addMessage(text) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = isUser ? 'message user-message' : 'message assistant-message';
+        messageDiv.className = 'message';
         
-        // Convert markdown-style text to HTML
-        const formattedText = text.replace(/\n/g, '<br>')
-                                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                 .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        // Add specific class based on who sent the message
+        if (text.startsWith('User:')) {
+            messageDiv.classList.add('user');
+        } else if (text.startsWith('Analyst:')) {
+            messageDiv.classList.add('analyst');
+        }
         
-        messageDiv.innerHTML = formattedText;
+        messageDiv.textContent = text;
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
