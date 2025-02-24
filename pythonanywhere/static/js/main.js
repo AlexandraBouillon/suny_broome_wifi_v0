@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
                            ).join('\n');
         }
 
-        return response || "I'm not sure how to help with that. Try asking about usage statistics or trends.";
+        return response || "I'm not sure how to help with that. Try asking about statistics or visualizations.";
     }
 
     // Add this function to test if Chart.js is loaded
