@@ -596,6 +596,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Your existing message processing logic
         const patterns = analyzeQuery(message.toLowerCase());
         const response = formatResponse(patterns, message);
-        addMessage('AI: ' + response);
+        addMessage('Analyst: ' + response);
     }
 }); 

@@ -41,12 +41,13 @@ body {
     display: flex;
     gap: 15px;
     padding: 15px;
-    background-color: var(--dark-bg);
+    background-color: transparent; /* Make fully transparent */
     margin-top: 70px;
     min-height: calc(100vh - 70px);
     justify-content: center;
     align-items: flex-start;
     position: relative;
+    backdrop-filter: none; /* Remove any backdrop filter */
 }
 
 /* Controls container */
@@ -64,6 +65,11 @@ body {
     gap: 30px;
     position: sticky;
     top: 85px;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    position: relative;
+    z-index: 1;
+    background-color: rgba(0, 0, 0, 0.8); /* Keep these visible */
+    border: 2px solid var(--suny-gold);
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
@@ -83,6 +89,11 @@ body {
     grid-template-columns: 1fr 350px;
     grid-template-rows: auto 1fr auto;
     gap: 20px;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    position: relative;
+    z-index: 1;
+    background-color: rgba(0, 0, 0, 0.8); /* Keep these visible */
+    border: 2px solid var(--suny-gold);
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
