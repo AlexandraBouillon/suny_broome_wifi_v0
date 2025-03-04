@@ -14,8 +14,93 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.inspection import partial_dependence
 warnings.filterwarnings('ignore')
 
+# Function to analyze dataset and return metrics
+def analyze_dataset(file_path, dataset_name):
+    print(f"\n=== Analyzing {dataset_name} ===")
+    
+    # Read and process data
+    df = pd.read_csv(file_path, skiprows=5)
+    
+    # Apply all the same preprocessing steps as before
+    df = df[~df['Read'].isin(['Date', 'TOTAL'])]
+    df['Read'] = pd.to_datetime(df['Read'], format='mixed', errors='coerce')
+    df = df.dropna(subset=['Read'])
+    df = df.replace('#DIV/0!', np.nan)
+    df = df.dropna(subset=['Total Usage', 'Total Cost'])
+    
+    # Convert numeric columns
+    numeric_columns = ['On-Peak', 'On-Peak.1', 'On-Peak.2',
+                      'Off-Peak', 'Off-Peak.1', 'Off-Peak.2',
+                      'Total Usage', 'Total Cost', 'Cost/kWh', 'Usage/Day']
+    
+    for col in numeric_columns:
+        df[col] = df[col].replace(r'[\$,]', '', regex=True).astype(float)
+    
+    # Create features
+    df['Month'] = df['Read'].dt.month
+    df['Year'] = df['Read'].dt.year
+    df['Month_Sin'] = np.sin(2 * np.pi * df['Month']/12)
+    df['Month_Cos'] = np.cos(2 * np.pi * df['Month']/12)
+    
+    # Prepare features for cost prediction
+    X = df[['Total Usage', 'On-Peak.1', 'Off-Peak.1',
+            'Month_Sin', 'Month_Cos']]
+    y = df['Total Cost']
+    
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Train Random Forest model
+    rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+    rf_model.fit(X_train, y_train)
+    
+    # Make predictions
+    y_pred = rf_model.predict(X_test)
+    
+    # Calculate metrics
+    metrics = {
+        'dataset_name': dataset_name,
+        'data_points': len(df),
+        'date_range': f"{df['Read'].min().strftime('%Y-%m')} to {df['Read'].max().strftime('%Y-%m')}",
+        'r2_train': rf_model.score(X_train, y_train),
+        'r2_test': rf_model.score(X_test, y_test),
+        'mse': mean_squared_error(y_test, y_pred),
+        'cv_score_mean': np.mean(cross_val_score(rf_model, X, y, cv=5)),
+        'cv_score_std': np.std(cross_val_score(rf_model, X, y, cv=5)),
+        'feature_importance': dict(zip(X.columns, rf_model.feature_importances_))
+    }
+    
+    return metrics
+
+# Analyze both datasets
+datasets = [
+    ('Electric_Gas_Usage_2019.csv', '2019 Dataset'),
+    ('Electric_Gas_Usage_1998_2021.csv', '1998-2021 Dataset')
+]
+
+results = []
+for file_path, name in datasets:
+    metrics = analyze_dataset(file_path, name)
+    results.append(metrics)
+
+# Compare results
+print("\n=== Dataset Comparison ===")
+for metric in results:
+    print(f"\nDataset: {metric['dataset_name']}")
+    print(f"Data points: {metric['data_points']}")
+    print(f"Date range: {metric['date_range']}")
+    print(f"R² Score (Training): {metric['r2_train']:.3f}")
+    print(f"R² Score (Testing): {metric['r2_test']:.3f}")
+    print(f"Mean Squared Error: {metric['mse']:.2f}")
+    print(f"Cross-validation Score: {metric['cv_score_mean']:.3f} (+/- {metric['cv_score_std']:.3f})")
+    print("\nFeature Importance:")
+    for feature, importance in sorted(metric['feature_importance'].items(), 
+                                    key=lambda x: x[1], reverse=True):
+        print(f"  {feature}: {importance:.3f}")
+
 # Read the CSV file, skipping the first few rows of metadata
-df = pd.read_csv('Electric_Gas_Usage_2019.csv', skiprows=5)
+# df = pd.read_csv('Electric_Gas_Usage_2019.csv', skiprows=5) # First data set
+df = pd.read_csv('Electric_Gas_Usage_1998_2021.csv', skiprows=5) # Second Data set 
 
 # Remove rows where 'Read' contains 'Date' or 'TOTAL'
 df = df[~df['Read'].isin(['Date', 'TOTAL'])]
